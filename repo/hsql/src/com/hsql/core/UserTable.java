@@ -10,6 +10,7 @@ import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
@@ -26,7 +27,7 @@ public class UserTable {
 
 	HTable table = null;
 	HTable indexTable = null;
-	private Set<String> indexColNames = new HashSet<String>();
+	private TreeSet<String> indexColNames = new TreeSet<String>();
 
 
 
@@ -147,39 +148,29 @@ public class UserTable {
 		TreeMap<String, String> sortedIndexes = new TreeMap<String, String>();
 		sortedIndexes.putAll(indexes);
 
-		String[] colTitle = new String[sortedIndexes.size()];
-		String[] colValues = new String[sortedIndexes.size()];
-		{
-			int i = 0;
-			for (String colName : sortedIndexes.keySet()) {
-				colValues[i] = sortedIndexes.get(colName);
-				colTitle[i] = colName;
-				i++;
-			}
-		}
 
 		List<UserRow> res = new ArrayList<UserRow>();
 		StringBuffer key = new StringBuffer();
 		int count = 0;
-		for (int i = 0; i < colValues.length; i++) {
-			if (colValues[i] != null) {
-				count++;
-				key.append(colTitle[i]);
-				key.append("=");
-				key.append(colValues[i]);
-				key.append("|");
-			}
+		for (String col:sortedIndexes.keySet()) {
+			key.append(col);
+			key.append("=");
+			key.append(sortedIndexes.get(col));
+			key.append("|");
+			count++;
 		}
 		String searchKey;
 		int prefix;
 		boolean containLast = false;
-		if (colValues[colValues.length - 1] != null)
+		//if one col is the last col in all indexed cols
+		if(indexColNames.descendingSet().first().equals(sortedIndexes.descendingKeySet().first())){
 			containLast = true;
+		}
 		{
 			if (containLast)
-				prefix = colValues.length - count;
+				prefix = indexColNames.size() - count;
 			else
-				prefix = colValues.length - count - 1;
+				prefix = indexColNames.size() - count - 1;
 		}
 
 		searchKey = prefix + "_" + key.substring(0, key.length() - 1);
