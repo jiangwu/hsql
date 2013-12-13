@@ -24,10 +24,7 @@ public class Console {
 				if(input.equals("quit"))
 					break;
 				String[] token=input.trim().split(" ");
-				if(token[0].equals("list")){
-					System.out.println("t1");
-					System.out.println("t1");
-				}else if(token[0].equals("get")){
+				if(token[0].equals("get")){
 					String tableName=token[1];
 					 UserTable userTable = new UserTable();
 					userTable.open(tableName);
@@ -64,6 +61,22 @@ public class Console {
 						e.printStackTrace();
 					}
 					userTable.close();
+				}else if(token[0].equals("show")){
+					if(token[1].equals("index")){
+						String tableName=token[2];
+						Admin admin=new Admin();
+						String [] cols=admin.getIndexCols(tableName);
+						for(String col:cols){
+							System.out.print(col+" ");
+						}
+						System.out.println();
+						
+					}else{
+						
+					}
+					
+				}else{
+					System.out.println("Invalid command");
 				}
 				
 			}
