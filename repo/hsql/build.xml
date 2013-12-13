@@ -25,11 +25,10 @@
 		<delete dir="${dist.dir}" />
 		<mkdir dir="${build.dir}" />
 		<mkdir dir="${dist.dir}" />
-		<javac srcdir="${src.dir}" destdir="${build.dir}" classpathref="build.classpath" />
+		<javac srcdir="${src.dir}" destdir="${build.dir}" classpathref="build.classpath" debug="true"/>
 		<jar destfile="${dist.dir}\hsql.jar" basedir="${build.dir}">
 
 		</jar>
-		<delete dir="${build.dir}" />
 	</target>
 
 

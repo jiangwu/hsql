@@ -166,7 +166,7 @@ public class Admin {
 	
 	@Test
 	public void testMainDelete(){
-		main(new String[]{"-delete", "testTable"});
+		main(new String[]{"-delete", "test"});
 	}
 
 	@Test
