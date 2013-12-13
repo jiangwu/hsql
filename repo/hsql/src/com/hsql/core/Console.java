@@ -34,7 +34,7 @@ public class Console {
 						cols.put(kv[0].trim(), kv[1].trim());
 					}
 					try {
-						List<UserRow> res = userTable.query(cols);
+						List<UserRow> res = userTable.getAll(cols);
 						for(UserRow row:res){
 							Utils.printRow(row);
 									

@@ -2,6 +2,7 @@ package com.hsql.app;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -27,9 +28,9 @@ public class QueryTestTable {
 		indexes.put("c2","01");
 		indexes.put("c3","02");
 		indexes.put("c4","03");
-//		indexes.put("c5","04");
+		indexes.put("c5","04");
 		
-		List<UserRow> res = table.query(indexes);
+		List<UserRow> res = table.getAll(indexes);
 		
 		for(UserRow row:res){
 			Utils.printRow(row);
@@ -37,6 +38,14 @@ public class QueryTestTable {
 		
 		System.out.println(System.currentTimeMillis()-t1+ "ms, "+ res.size()+ " rows");
 		
+		Iterable<UserRow> rows=table.get(indexes);
+		
+		System.out.println("use iterator...");
+		t1=System.currentTimeMillis();
+		for(UserRow row:rows){
+			Utils.printRow(row);
+		}
+		System.out.println(System.currentTimeMillis()-t1+ "ms, "+ res.size()+ " rows");
 		table.close();
 		
 
