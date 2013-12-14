@@ -13,6 +13,7 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
+import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
@@ -22,13 +23,13 @@ import org.apache.hadoop.hbase.client.Scan;
 import org.junit.Test;
 
 public class UserTable {
-	public final static byte[] userTableFamily = "f1".getBytes();
-	public final static byte[] indexTableFamily = "f1".getBytes();
-	public final static byte[] indexTableCol = "primaryKey".getBytes();
+	public final static byte[] userColumnFamily = "f1".getBytes();
+	public final static byte[] indexColumnFamily = "f1".getBytes();
+	public final static byte[] indexQualifier = "primaryKey".getBytes();
 
-	HTable table = null;
-	HTable indexTable = null;
-	private TreeSet<String> indexColNames = new TreeSet<String>();
+	HTable userHTable = null;
+	HTable indexHTable = null;
+	private TreeSet<String> indexNames = new TreeSet<String>();
 
 	/**
 	 * open connection to both user table and index table
@@ -42,25 +43,28 @@ public class UserTable {
 
 		if (cols != null) {
 			for (String s : cols) {
-				indexColNames.add(s);
+				indexNames.add(s);
 			}
 		}
 
-		table = new HTable(tableName);
-		indexTable = new HTable(tableName + "Index");
+		userHTable = new HTable(tableName);
+		indexHTable = new HTable(tableName + "Index");
 
 	}
 
+	/**
+	 * close both user table and index table
+	 */
 	public void close() {
 		try {
-			table.close();
+			userHTable.close();
 
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		try {
-			indexTable.close();
+			indexHTable.close();
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -70,14 +74,39 @@ public class UserTable {
 	/**
 	 * verify if the column names are valid
 	 * 
-	 * @param indexedCol
+	 * @param indexCol
 	 * @throws Exception
 	 */
-	private void validate(Map<String, String> indexedCol) throws Exception {
-		for (String c : indexedCol.keySet()) {
-			if (!indexColNames.contains(c))
+	private void validate(Map<String, String> indexCol) throws Exception {
+		for (String c : indexCol.keySet()) {
+			if (!indexNames.contains(c))
 				throw new Exception("column " + c + " is not indexed");
 		}
+	}
+	
+	public void delete(String pk) throws IOException{
+		Get get=new Get(pk.getBytes());
+		Result rs=userHTable.get(get);
+		NavigableMap<byte[], byte[]> kv = rs.getNoVersionMap().values().iterator().next();
+		Map<String, String> indexes=new HashMap<String, String>();
+		for(byte[] col:kv.keySet()){
+			if(indexNames.contains(new String(col))){
+				indexes.put(new String(col), new String(kv.get(col)));
+			}
+		}
+		List<String> indexKeys = IndexCreator.getIndexKeys(indexes, pk);
+		
+		Delete delete=new Delete(pk.getBytes());
+		userHTable.delete(delete);
+		
+		List<Delete> deletes=new ArrayList<Delete>();
+		for(String k:indexKeys){
+			delete=new Delete(k.getBytes());
+			deletes.add(delete);
+		}
+		indexHTable.delete(deletes);
+		
+		//get row, compute index, delete index, delete row
 	}
 
 	/**
@@ -96,7 +125,7 @@ public class UserTable {
 		Map<String, String> noneIndexCol = new HashMap<String, String>();
 
 		for (String k : allCols.keySet()) {
-			if (indexColNames.contains(k)) {
+			if (indexNames.contains(k)) {
 				indexCol.put(k, allCols.get(k));
 			} else {
 				noneIndexCol.put(k, allCols.get(k));
@@ -109,27 +138,27 @@ public class UserTable {
 		List<Put> puts = new ArrayList<Put>();
 
 		for (Entry<String, String> e : indexCol.entrySet()) {
-			put.add(userTableFamily, e.getKey().getBytes(), e.getValue()
+			put.add(userColumnFamily, e.getKey().getBytes(), e.getValue()
 					.getBytes());
 			puts.add(put);
 		}
 		for (Entry<String, String> e : noneIndexCol.entrySet()) {
-			put.add(userTableFamily, e.getKey().getBytes(), e.getValue()
+			put.add(userColumnFamily, e.getKey().getBytes(), e.getValue()
 					.getBytes());
 			puts.add(put);
 		}
 
-		table.put(puts);
+		userHTable.put(puts);
 
 		List<String> indexes = IndexCreator.getIndexKeys(indexCol, key);
 
 		puts.clear();
 		for (String index : indexes) {
 			put = new Put((index).getBytes());
-			put.add(indexTableFamily, indexTableCol, key.getBytes());
+			put.add(indexColumnFamily, indexQualifier, key.getBytes());
 			puts.add(put);
 		}
-		indexTable.put(puts);
+		indexHTable.put(puts);
 
 	}
 
@@ -146,8 +175,8 @@ public class UserTable {
 		@Override
 		public Iterator<UserRow> iterator() {
 			try {
-				rs=getScanner(indexes);
-				it=rs.iterator();
+				rs = getScanner(indexes);
+				it = rs.iterator();
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -161,7 +190,7 @@ public class UserTable {
 
 			@Override
 			public boolean hasNext() {
-				if(it.hasNext()==false){
+				if (it.hasNext() == false) {
 					rs.close();
 				}
 				return it.hasNext();
@@ -195,7 +224,6 @@ public class UserTable {
 		TreeMap<String, String> sortedIndexes = new TreeMap<String, String>();
 		sortedIndexes.putAll(indexes);
 
-
 		StringBuffer key = new StringBuffer();
 		int count = 0;
 		for (String col : sortedIndexes.keySet()) {
@@ -209,16 +237,15 @@ public class UserTable {
 		int prefix;
 		boolean containLast = false;
 		// if one col is the last col in all indexed cols
-		if (indexColNames.descendingSet().first()
+		if (indexNames.descendingSet().first()
 				.equals(sortedIndexes.descendingKeySet().first())) {
 			containLast = true;
 		}
-		{
-			if (containLast)
-				prefix = indexColNames.size() - count;
-			else
-				prefix = indexColNames.size() - count - 1;
-		}
+
+		if (containLast)
+			prefix = indexNames.size() - count;
+		else
+			prefix = indexNames.size() - count - 1;
 
 		searchKey = prefix + "_" + key.substring(0, key.length() - 1);
 
@@ -228,26 +255,26 @@ public class UserTable {
 		byte[] stopRow = searchKey.getBytes();
 		stopRow[stopRow.length - 1]++;
 		scan.setStopRow(stopRow);
-		scan.addColumn(indexTableFamily, indexTableCol);
-		ResultScanner rs = indexTable.getScanner(scan);
+		scan.addColumn(indexColumnFamily, indexQualifier);
+		ResultScanner rs = indexHTable.getScanner(scan);
 		return rs;
 	}
-	
-	private UserRow getRow(Result rr) throws IOException{
-		String primaryKey = new String(rr.getValue(indexTableFamily,
-				indexTableCol));
+
+	private UserRow getRow(Result rr) throws IOException {
+		String primaryKey = new String(rr.getValue(indexColumnFamily,
+				indexQualifier));
 		Get get = new Get(primaryKey.getBytes());
-		Result getRes = table.get(get);
+		Result getRes = userHTable.get(get);
 		NavigableMap<byte[], NavigableMap<byte[], byte[]>> resMap = getRes
 				.getNoVersionMap();
-		NavigableMap<byte[], byte[]> fMap = resMap.get(userTableFamily);
+		NavigableMap<byte[], byte[]> fMap = resMap.get(userColumnFamily);
 
 		Map<String, String> indexedCol = new HashMap<String, String>();
 		Map<String, String> unIndexedCol = new HashMap<String, String>();
 		for (byte[] kk : fMap.keySet()) {
 			String col = new String(kk);
 			String v = new String(fMap.get(kk));
-			if (indexColNames.contains(col)) {
+			if (indexNames.contains(col)) {
 				indexedCol.put(col, v);
 			} else {
 				unIndexedCol.put(col, v);
@@ -260,28 +287,11 @@ public class UserTable {
 		row.setKey(primaryKey);
 		return row;
 	}
-
-	/**
-	 * 
-	 * @param indexes
-	 *            column=>value pairs to query. column must be used in index
-	 * @return the index columns
-	 * @throws Exception
-	 */
-	public List<UserRow> getAll(Map<String, String> indexes) throws Exception {
-		ResultScanner rs = getScanner(indexes);
-		List<UserRow> res=new ArrayList<UserRow>();
-		for (Result rr = rs.next(); rr != null; rr = rs.next()) {
-
-			UserRow row=getRow(rr);
-			res.add(row);
-
-		}
-
-		rs.close();
-
-		return res;
-
+	
+	@Test
+	public void deleteTest() throws IOException{
+		open("test1");
+		delete("1");
 	}
 
 	@Test(expected = Exception.class)
@@ -352,7 +362,7 @@ public class UserTable {
 		Map<String, String> map = new HashMap<String, String>();
 		map.put("c0", "vc0");
 
-		List<UserRow> rows = getAll(map);
+		Iterable<UserRow> rows = get(map);
 		for (UserRow row : rows) {
 			Map<String, String> colValue = row.getIndexedCols();
 			for (String col : colValue.keySet()) {

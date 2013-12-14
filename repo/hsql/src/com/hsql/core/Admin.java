@@ -70,13 +70,13 @@ public class Admin {
 		// create table
 		HTableDescriptor desc = new HTableDescriptor(table.getBytes());
 		HColumnDescriptor cdesc = new HColumnDescriptor(
-				UserTable.userTableFamily);
+				UserTable.userColumnFamily);
 		desc.addFamily(cdesc);
 		admin.createTable(desc);
 
 		// create index table
 		desc = new HTableDescriptor(table + "Index");
-		cdesc = new HColumnDescriptor(UserTable.indexTableFamily);
+		cdesc = new HColumnDescriptor(UserTable.indexColumnFamily);
 		desc.addFamily(cdesc);
 		admin.createTable(desc);
 
@@ -103,7 +103,7 @@ public class Admin {
 		HTable indexTable = new HTable(indexMetaTable);
 
 		Delete delete = new Delete(tableName.getBytes());
-		delete.deleteFamily(UserTable.indexTableFamily);
+		delete.deleteFamily(UserTable.indexColumnFamily);
 
 		indexTable.delete(delete);
 		indexTable.close();
@@ -161,7 +161,7 @@ public class Admin {
 	
 	@Test
 	public void testMainCreate(){
-		main(new String[]{"-create", "testTable", "c0", "c1", "c2"});
+		main(new String[]{"-create", "test1", "c0", "c1", "c2"});
 	}
 	
 	@Test

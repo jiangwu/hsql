@@ -24,7 +24,20 @@ public class Console {
 				if(input.equals("quit"))
 					break;
 				String[] token=input.trim().split(" ");
-				if(token[0].equals("get")){
+				if(token[0].equals("help")){
+					System.out.println("show index tableName");
+					System.out.println("put tableName primaryKey index1=value1 ...");
+					System.out.println("get tableName index1=value1 ...");
+					System.out.println("delete tableName primaryKey");
+				}if(token[0].equals("delete")){
+					String tableName=token[1];
+					String pk=token[2];
+					UserTable userTable = new UserTable();
+					userTable.open(tableName);
+					userTable.delete(pk);
+					userTable.close();
+					
+				}else if(token[0].equals("get")){
 					String tableName=token[1];
 					 UserTable userTable = new UserTable();
 					userTable.open(tableName);
@@ -34,7 +47,7 @@ public class Console {
 						cols.put(kv[0].trim(), kv[1].trim());
 					}
 					try {
-						List<UserRow> res = userTable.getAll(cols);
+						Iterable<UserRow> res = userTable.get(cols);
 						for(UserRow row:res){
 							Utils.printRow(row);
 									

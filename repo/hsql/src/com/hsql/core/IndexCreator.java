@@ -12,7 +12,7 @@ import java.util.TreeSet;
 
 import org.junit.Test;
 
-public class IndexCreator {
+class IndexCreator {
 	/**
 	 * 
 	 * @param big
@@ -89,7 +89,7 @@ public class IndexCreator {
 	}
 
 	/**
-	 * 
+	 * thread safe
 	 * @param indexCol contains column => value pairs
 	 * @return a list of keys used to find primary key
 	 */
