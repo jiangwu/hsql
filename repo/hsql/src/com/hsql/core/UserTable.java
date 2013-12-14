@@ -71,19 +71,7 @@ public class UserTable {
 		}
 	}
 
-	/**
-	 * verify if the column names are valid
-	 * 
-	 * @param indexCol
-	 * @throws Exception
-	 */
-	private void validate(Map<String, String> indexCol) throws Exception {
-		for (String c : indexCol.keySet()) {
-			if (!indexNames.contains(c))
-				throw new Exception("column " + c + " is not indexed");
-		}
-	}
-	
+
 	public void delete(String pk) throws IOException{
 		Get get=new Get(pk.getBytes());
 		Result rs=userHTable.get(get);
@@ -111,6 +99,8 @@ public class UserTable {
 
 	/**
 	 * insert a row into user table; also build index in the index table
+	 * all index columns must have values
+	 * if a row with the same primary key already exists, the previous indexes will be deleted
 	 * 
 	 * @param key
 	 *            is unique in a table
@@ -120,6 +110,12 @@ public class UserTable {
 	 */
 	public void insert(String key, Map<String, String> allCols)
 			throws Exception {
+		
+		Get get=new Get(key.getBytes());
+		Result rs = userHTable.get(get);
+		if(rs!=null && rs.getRow()!=null && new String(rs.getRow()).equals(key)){
+			delete(key);
+		}
 
 		Map<String, String> indexCol = new HashMap<String, String>();
 		Map<String, String> noneIndexCol = new HashMap<String, String>();
@@ -132,7 +128,9 @@ public class UserTable {
 			}
 		}
 
-		validate(indexCol);
+		if(indexCol.size()<indexNames.size()){
+			throw new Exception("All index columns must have values");
+		}
 
 		Put put = new Put(key.getBytes());
 		List<Put> puts = new ArrayList<Put>();
@@ -168,7 +166,10 @@ public class UserTable {
 		private Iterator<Result> it;
 
 		public RowIterable(Map<String, String> indexes) throws Exception {
-			validate(indexes);
+			if(!indexNames.containsAll(indexes.keySet())){
+				throw new Exception("searched columns are not indexed");
+			}
+
 			this.indexes = indexes;
 		}
 
@@ -219,7 +220,6 @@ public class UserTable {
 
 	private ResultScanner getScanner(Map<String, String> indexes)
 			throws Exception {
-		validate(indexes);
 
 		TreeMap<String, String> sortedIndexes = new TreeMap<String, String>();
 		sortedIndexes.putAll(indexes);
