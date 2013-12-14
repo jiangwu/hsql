@@ -1,13 +1,11 @@
 package com.hsql.app;
 
-import java.io.IOException;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 
 import com.hsql.core.UserRow;
 import com.hsql.core.UserTable;
+import com.hsql.core.UserTableFactory;
 import com.hsql.core.Utils;
 
 public class QueryTestTable {
@@ -17,9 +15,9 @@ public class QueryTestTable {
 	 * @throws Exception 
 	 */
 	public static void main(String[] args) throws Exception {
-		UserTable table=new UserTable();
+		UserTable table=UserTableFactory.getTable("test");;
 			
-		table.open("test");
+		table.open();
 		
 		long t1=System.currentTimeMillis();
 		Map<String, String> indexes=new HashMap<String, String>();
@@ -30,22 +28,26 @@ public class QueryTestTable {
 		indexes.put("c4","03");
 		indexes.put("c5","04");
 		
-		List<UserRow> res = table.getAll(indexes);
+		Iterable<UserRow> res = table.select(indexes);
 		
+		int count=0;
 		for(UserRow row:res){
 			Utils.printRow(row);
+			count ++;
 		}
 		
-		System.out.println(System.currentTimeMillis()-t1+ "ms, "+ res.size()+ " rows");
+		System.out.println(System.currentTimeMillis()-t1+ "ms, "+ count+ " rows");
 		
-		Iterable<UserRow> rows=table.get(indexes);
+		Iterable<UserRow> rows=table.select(indexes);
 		
 		System.out.println("use iterator...");
 		t1=System.currentTimeMillis();
+		count =0;
 		for(UserRow row:rows){
 			Utils.printRow(row);
+			count++;
 		}
-		System.out.println(System.currentTimeMillis()-t1+ "ms, "+ res.size()+ " rows");
+		System.out.println(System.currentTimeMillis()-t1+ "ms, "+ count+ " rows");
 		table.close();
 		
 

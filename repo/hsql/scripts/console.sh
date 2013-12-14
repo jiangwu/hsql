@@ -1,1 +1,1 @@
-java -cp ../lib/*:../dist/* com.hsql.core.Console  $@
+java -cp ../lib/*:../dist/* com.hsql.app.Console  $@

@@ -1,11 +1,12 @@
 package com.hsql.app;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-import com.hsql.core.Admin;
+import com.hsql.core.AdminUtil;
 import com.hsql.core.UserTable;
+import com.hsql.core.UserTableFactory;
+
 
 public class FillTestTable {
 
@@ -14,13 +15,13 @@ public class FillTestTable {
 	 * @throws Exception 
 	 */
 	public static void main(String[] args) throws Exception {
-		Admin admin=new Admin();
+		AdminUtil admin=new AdminUtil();
 		String[] indexCol=new String[]{"c1", "c2","c3","c4","c5"}; 
 		admin.deleteTable("test");
 		admin.createTable("test", indexCol);
 		
-		UserTable table=new UserTable();
-		table.open("test");
+		UserTable table=UserTableFactory.getTable("test");
+		table.open();
 		Map<String, String> iColVal=new HashMap<String, String>();
 		int [] i=new int[5];
 		int key=0;
@@ -46,10 +47,6 @@ public class FillTestTable {
 			
 		}
 		table.close();
-		
-		
-		
-
 	}
 
 }

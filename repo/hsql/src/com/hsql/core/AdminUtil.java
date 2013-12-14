@@ -13,7 +13,7 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.junit.Test;
 
-public class Admin {
+public class AdminUtil {
 
 	private final static String indexMetaTable = "indexMeta";
 	private final static byte[] family = "f1".getBytes();
@@ -70,13 +70,13 @@ public class Admin {
 		// create table
 		HTableDescriptor desc = new HTableDescriptor(table.getBytes());
 		HColumnDescriptor cdesc = new HColumnDescriptor(
-				UserTable.userColumnFamily);
+				UserTableImpl.userColumnFamily);
 		desc.addFamily(cdesc);
 		admin.createTable(desc);
 
 		// create index table
 		desc = new HTableDescriptor(table + "Index");
-		cdesc = new HColumnDescriptor(UserTable.indexColumnFamily);
+		cdesc = new HColumnDescriptor(UserTableImpl.indexColumnFamily);
 		desc.addFamily(cdesc);
 		admin.createTable(desc);
 
@@ -103,7 +103,7 @@ public class Admin {
 		HTable indexTable = new HTable(indexMetaTable);
 
 		Delete delete = new Delete(tableName.getBytes());
-		delete.deleteFamily(UserTable.indexColumnFamily);
+		delete.deleteFamily(UserTableImpl.indexColumnFamily);
 
 		indexTable.delete(delete);
 		indexTable.close();
@@ -120,64 +120,6 @@ public class Admin {
 		}
 
 		admin.close();
-	}
-	
-	public static void main(String[] args){
-		if(args.length<2 ){
-			System.out.println("Usage:\n -create|-delete tabelName [col1 col2 col3 ...]");
-			return;
-		}
-		String tableName=args[1];
-		Admin admin=new Admin();
-		
-		if(args[0].equals("-create")){
-
-			if(args.length<3){
-				System.out.println("to create table, provide column list to be indexed");
-				return;
-			}
-			String[] col=new String [args.length-2];
-			for(int i=2;i<args.length;i++){
-				col[i-2]=args[i];
-			}
-
-			try {
-				admin.createTable(tableName, col);
-			} catch (IOException e) {
-				System.out.println("create table failed.");
-				e.printStackTrace();
-			}
-			
-		}else{
-			try {
-				admin.deleteTable(tableName);
-			} catch (IOException e) {
-				System.out.println("delete table failed");
-				e.printStackTrace();
-			}
-		}
-		
-	}
-	
-	@Test
-	public void testMainCreate(){
-		main(new String[]{"-create", "test1", "c0", "c1", "c2"});
-	}
-	
-	@Test
-	public void testMainDelete(){
-		main(new String[]{"-delete", "test"});
-	}
-
-	@Test
-	public void test2() throws IOException {
-		deleteTable("testTable");
-	}
-
-	@Test
-	public void test1() throws IOException {
-		createTable("testTable", new String[] { "c0", "c1", "c2", "c3" });
-
 	}
 
 }

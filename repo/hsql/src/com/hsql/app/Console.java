@@ -1,4 +1,4 @@
-package com.hsql.core;
+package com.hsql.app;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -6,6 +6,12 @@ import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import com.hsql.core.AdminUtil;
+import com.hsql.core.UserRow;
+import com.hsql.core.UserTable;
+import com.hsql.core.UserTableFactory;
+import com.hsql.core.Utils;
 
 public class Console {
 
@@ -32,22 +38,22 @@ public class Console {
 				}if(token[0].equals("delete")){
 					String tableName=token[1];
 					String pk=token[2];
-					UserTable userTable = new UserTable();
-					userTable.open(tableName);
+					UserTable userTable = UserTableFactory.getTable(tableName);;
+					userTable.open();
 					userTable.delete(pk);
 					userTable.close();
 					
 				}else if(token[0].equals("get")){
 					String tableName=token[1];
-					 UserTable userTable = new UserTable();
-					userTable.open(tableName);
+					 UserTable userTable = UserTableFactory.getTable(tableName);;
+					userTable.open();
 					Map<String, String> cols=new HashMap<String, String>();
 					for(int i=2;i<token.length;i++){
 						String[]kv=token[i].split("=");
 						cols.put(kv[0].trim(), kv[1].trim());
 					}
 					try {
-						Iterable<UserRow> res = userTable.get(cols);
+						Iterable<UserRow> res = userTable.select(cols);
 						for(UserRow row:res){
 							Utils.printRow(row);
 									
@@ -60,8 +66,8 @@ public class Console {
 				}else if(token[0].equals("put")){
 					String tableName=token[1];
 					String key=token[2];
-					 UserTable userTable = new UserTable();
-					userTable.open(tableName);
+					 UserTable userTable = UserTableFactory.getTable(tableName);;
+					userTable.open();
 					Map<String, String> cols=new HashMap<String, String>();
 					for(int i=3;i<token.length;i++){
 						String[]kv=token[i].split("=");
@@ -77,7 +83,7 @@ public class Console {
 				}else if(token[0].equals("show")){
 					if(token[1].equals("index")){
 						String tableName=token[2];
-						Admin admin=new Admin();
+						AdminUtil admin=new AdminUtil();
 						String [] cols=admin.getIndexCols(tableName);
 						for(String col:cols){
 							System.out.print(col+" ");
