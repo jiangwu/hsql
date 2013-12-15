@@ -5,6 +5,8 @@ import java.io.IOException;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.HColumnDescriptor;
 import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.MasterNotRunningException;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -120,6 +122,17 @@ public class AdminUtil {
 		}
 
 		admin.close();
+	}
+	public boolean isTableValid(String tableName) throws IOException{
+		HBaseAdmin admin=new HBaseAdmin(new Configuration());
+		boolean res=true;
+		if(!admin.isTableAvailable(tableName) && !admin.isTableAvailable(tableName+"Index")){
+			res= false;
+		}else{
+			res= true;
+		}
+		admin.close();
+		return res;
 	}
 
 }

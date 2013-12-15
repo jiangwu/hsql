@@ -39,14 +39,24 @@ public class Console {
 					String tableName=token[1];
 					String pk=token[2];
 					UserTable userTable = UserTableFactory.getTable(tableName);;
-					userTable.open();
+					try {
+						userTable.open();
+					} catch (Exception e) {
+						System.out.println("cannot open table");
+						continue;
+					}
 					userTable.delete(pk);
 					userTable.close();
 					
 				}else if(token[0].equals("get")){
 					String tableName=token[1];
 					 UserTable userTable = UserTableFactory.getTable(tableName);;
-					userTable.open();
+					try {
+						userTable.open();
+					} catch (Exception e1) {
+						System.out.println("cannot open table");
+						continue;
+					}
 					Map<String, String> cols=new HashMap<String, String>();
 					for(int i=2;i<token.length;i++){
 						String[]kv=token[i].split("=");
@@ -67,7 +77,12 @@ public class Console {
 					String tableName=token[1];
 					String key=token[2];
 					 UserTable userTable = UserTableFactory.getTable(tableName);;
-					userTable.open();
+					try {
+						userTable.open();
+					} catch (Exception e1) {
+						System.out.println("cannot open table");
+						continue;
+					}
 					Map<String, String> cols=new HashMap<String, String>();
 					for(int i=3;i<token.length;i++){
 						String[]kv=token[i].split("=");

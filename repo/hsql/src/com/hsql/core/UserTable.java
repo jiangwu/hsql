@@ -5,7 +5,7 @@ import java.util.Map;
 
 public interface UserTable {
 
-	void open() throws IOException;
+	void open() throws Exception;
 
 	void close();
 

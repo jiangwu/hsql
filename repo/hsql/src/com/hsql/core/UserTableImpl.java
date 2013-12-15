@@ -22,18 +22,23 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.junit.Test;
 
-class UserTableImpl implements UserTable{
+/**
+ * 
+ * 
+ * This class is not thread-safe.
+ */
+class UserTableImpl implements UserTable {
 	public final static byte[] userColumnFamily = "f1".getBytes();
 	public final static byte[] indexColumnFamily = "f1".getBytes();
 	public final static byte[] indexQualifier = "primaryKey".getBytes();
 
-	HTable userHTable = null;
-	HTable indexHTable = null;
+	private HTable userHTable = null;
+	private HTable indexHTable = null;
 	private TreeSet<String> indexNames = new TreeSet<String>();
 	private String tableName;
 
 	public UserTableImpl(String tableName) {
-		this.tableName=tableName;
+		this.tableName = tableName;
 	}
 
 	/**
@@ -42,15 +47,18 @@ class UserTableImpl implements UserTable{
 	 * @throws IOException
 	 */
 	@Override
-	public void open() throws IOException {
-		AdminUtil metaTable = new AdminUtil();
+	public void open() throws Exception {
+		AdminUtil adminUtil = new AdminUtil();
 
-		String[] cols = metaTable.getIndexCols(tableName);
+		String[] cols = adminUtil.getIndexCols(tableName);
 
 		if (cols != null) {
 			for (String s : cols) {
 				indexNames.add(s);
 			}
+		} else {
+			throw new Exception("cannot get index information for table "
+					+ tableName);
 		}
 
 		userHTable = new HTable(tableName);
@@ -67,62 +75,61 @@ class UserTableImpl implements UserTable{
 			userHTable.close();
 
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+
 		}
 		try {
 			indexHTable.close();
 		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+
 		}
 	}
 
-
 	@Override
-	public void delete(String pk) throws IOException{
-		Get get=new Get(pk.getBytes());
-		Result rs=userHTable.get(get);
-		NavigableMap<byte[], byte[]> kv = rs.getNoVersionMap().values().iterator().next();
-		Map<String, String> indexes=new HashMap<String, String>();
-		for(byte[] col:kv.keySet()){
-			if(indexNames.contains(new String(col))){
+	public void delete(String pk) throws IOException {
+		Get get = new Get(pk.getBytes());
+		Result rs = userHTable.get(get);
+		NavigableMap<byte[], byte[]> kv = rs.getNoVersionMap().values()
+				.iterator().next();
+		Map<String, String> indexes = new HashMap<String, String>();
+		for (byte[] col : kv.keySet()) {
+			if (indexNames.contains(new String(col))) {
 				indexes.put(new String(col), new String(kv.get(col)));
 			}
 		}
 		List<String> indexKeys = IndexCreator.getIndexKeys(indexes, pk);
-		
-		Delete delete=new Delete(pk.getBytes());
+
+		Delete delete = new Delete(pk.getBytes());
 		userHTable.delete(delete);
-		
-		List<Delete> deletes=new ArrayList<Delete>();
-		for(String k:indexKeys){
-			delete=new Delete(k.getBytes());
+
+		List<Delete> deletes = new ArrayList<Delete>();
+		for (String k : indexKeys) {
+			delete = new Delete(k.getBytes());
 			deletes.add(delete);
 		}
 		indexHTable.delete(deletes);
-		
-		//get row, compute index, delete index, delete row
+
 	}
 
 	/**
-	 * insert a row into user table; also build index in the index table
-	 * all index columns must have values
-	 * if a row with the same primary key already exists, the previous indexes will be deleted
+	 * insert a row into user table; also build index in the index table all
+	 * index columns must have values if a row with the same primary key already
+	 * exists, the previous indexes will be deleted
 	 * 
 	 * @param key
 	 *            is unique in a table
-	 * @param indexCol
-	 * @param noneIndexCol
+	 * @param allCols
+	 *            contain all key-value pairs of columns. All index columns must
+	 *            be included.
 	 * @throws Exception
 	 */
 	@Override
 	public void insert(String key, Map<String, String> allCols)
 			throws Exception {
-		
-		Get get=new Get(key.getBytes());
+
+		Get get = new Get(key.getBytes());
 		Result rs = userHTable.get(get);
-		if(rs!=null && rs.getRow()!=null && new String(rs.getRow()).equals(key)){
+		if (rs != null && rs.getRow() != null
+				&& new String(rs.getRow()).equals(key)) {
 			delete(key);
 		}
 
@@ -137,7 +144,7 @@ class UserTableImpl implements UserTable{
 			}
 		}
 
-		if(indexCol.size()<indexNames.size()){
+		if (indexCol.size() < indexNames.size()) {
 			throw new Exception("All index columns must have values");
 		}
 
@@ -175,7 +182,7 @@ class UserTableImpl implements UserTable{
 		private Iterator<Result> it;
 
 		public RowIterable(Map<String, String> indexes) throws Exception {
-			if(!indexNames.containsAll(indexes.keySet())){
+			if (!indexNames.containsAll(indexes.keySet())) {
 				throw new Exception("searched columns are not indexed");
 			}
 
@@ -224,41 +231,43 @@ class UserTableImpl implements UserTable{
 	}
 
 	@Override
-	public Iterable<UserRow> select(Map<String, String> indexes) throws Exception {
+	public Iterable<UserRow> select(Map<String, String> indexes)
+			throws Exception {
 		return new RowIterable(indexes);
 	}
 
 	private ResultScanner getScanner(Map<String, String> indexes)
 			throws Exception {
-
-		TreeMap<String, String> sortedIndexes = new TreeMap<String, String>();
-		sortedIndexes.putAll(indexes);
-
-		StringBuffer key = new StringBuffer();
-		int count = 0;
-		for (String col : sortedIndexes.keySet()) {
-			key.append(col);
-			key.append("=");
-			key.append(sortedIndexes.get(col));
-			key.append("|");
-			count++;
-		}
-		String searchKey;
-		int prefix;
-		boolean containLast = false;
-		// if one col is the last col in all indexed cols
-		if (indexNames.descendingSet().first()
-				.equals(sortedIndexes.descendingKeySet().first())) {
-			containLast = true;
-		}
-
-		if (containLast)
-			prefix = indexNames.size() - count;
-		else
-			prefix = indexNames.size() - count - 1;
-
-		searchKey = prefix + "_" + key.substring(0, key.length() - 1);
-
+		String searchKey=IndexCreator.getSearchKey(indexes, indexNames);
+//		{
+//			TreeMap<String, String> sortedIndexes = new TreeMap<String, String>();
+//			sortedIndexes.putAll(indexes);
+//
+//			StringBuffer key = new StringBuffer();
+//			int count = 0;
+//			for (String col : sortedIndexes.keySet()) {
+//				key.append(col);
+//				key.append("=");
+//				key.append(sortedIndexes.get(col));
+//				key.append("|");
+//				count++;
+//			}
+//
+//			int prefix;
+//			boolean containLast = false;
+//			// if one col is the last col in all indexed cols
+//			if (indexNames.descendingSet().first()
+//					.equals(sortedIndexes.descendingKeySet().first())) {
+//				containLast = true;
+//			}
+//
+//			if (containLast)
+//				prefix = indexNames.size() - count;
+//			else
+//				prefix = indexNames.size() - count - 1;
+//
+//			searchKey = prefix + "_" + key.substring(0, key.length() - 1);
+//		}
 		Scan scan = new Scan();
 		byte[] startRow = searchKey.getBytes();
 		scan.setStartRow(startRow);
@@ -297,7 +306,5 @@ class UserTableImpl implements UserTable{
 		row.setKey(primaryKey);
 		return row;
 	}
-	
-
 
 }

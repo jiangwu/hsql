@@ -34,7 +34,7 @@ class IndexCreator {
 	 * 
 	 * @param set
 	 * @param i
-	 * @return a set with all components from input set except for input i
+	 * @return
 	 */
 	private static TreeSet<Integer> copyMinus(TreeSet<Integer> set, int i) {
 		TreeSet<Integer> res = new TreeSet<Integer>();
@@ -86,6 +86,39 @@ class IndexCreator {
 		}
 		return res;
 
+	}
+	
+	public static String getSearchKey(Map<String, String> indexes, TreeSet<String> indexNames){
+		{
+			TreeMap<String, String> sortedIndexes = new TreeMap<String, String>();
+			sortedIndexes.putAll(indexes);
+
+			StringBuffer key = new StringBuffer();
+			int count = 0;
+			for (String col : sortedIndexes.keySet()) {
+				key.append(col);
+				key.append("=");
+				key.append(sortedIndexes.get(col));
+				key.append("|");
+				count++;
+			}
+
+			int prefix;
+			boolean containLast = false;
+			// if one col is the last col in all indexed cols
+			if (indexNames.descendingSet().first()
+					.equals(sortedIndexes.descendingKeySet().first())) {
+				containLast = true;
+			}
+
+			if (containLast)
+				prefix = indexNames.size() - count;
+			else
+				prefix = indexNames.size() - count - 1;
+
+			String searchKey = prefix + "_" + key.substring(0, key.length() - 1);
+			return searchKey;
+		}
 	}
 
 	/**
@@ -151,16 +184,4 @@ class IndexCreator {
 
 	}
 
-	@Test
-	public void test() {
-		Map<String, String> cols = new HashMap<String, String>();
-		cols.put("c0", "0");
-		cols.put("c1", "1");
-		cols.put("c2", "2");
-		cols.put("c3", "3");
-		List<String> keys = getIndexKeys(cols, "p1");
-		for (String key : keys) {
-			System.out.println(key);
-		}
-	}
 }
