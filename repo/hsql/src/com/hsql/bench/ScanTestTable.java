@@ -17,9 +17,10 @@ public class ScanTestTable {
 	 * @param args
 	 * @throws IOException
 	 */
-	public static void main(String[] args) throws IOException {
+	public static long run() throws IOException {
 		String tableName = TestSetting.tableName;
 		HTable table = new HTable(tableName);
+		int colSize=TestSetting.colSize;
 
 		long totalTime=0;
 		for (int j = 0; j < 100; j++) {
@@ -30,25 +31,26 @@ public class ScanTestTable {
 
 				SingleColumnValueFilter filter = new SingleColumnValueFilter(
 						"f1".getBytes(), col.getBytes(), CompareOp.EQUAL,
-						String.format("%02d", random.nextInt(16)).getBytes());
+						String.format("%02d", random.nextInt(colSize)).getBytes());
 				list.addFilter(filter);
 			}
 
-			long t1 = System.currentTimeMillis();
+			long t1 = System.nanoTime();
 			Scan scan = new Scan();
 			scan.setFilter(list);
 			ResultScanner rs = table.getScanner(scan);
 			for (Result rr = rs.next(); rr != null; rr = rs.next()) {
 				byte[] keyBytes = rr.getRow();
 
-				System.out.println(System.currentTimeMillis() - t1 + " ms for " + new String(keyBytes));
+				System.out.println(System.nanoTime() - t1 + " ns for " + new String(keyBytes));
 			}
 			
-			totalTime=totalTime+(System.currentTimeMillis() - t1);
+			totalTime=totalTime+(System.nanoTime() - t1);
 		}
-		System.out.println("Average "+(totalTime/100)+ " ms for each query");
+		System.out.println("Average "+(totalTime/100)+ " ns for each query");
 		
 		table.close();
+		return totalTime/100;
 	}
 
 }

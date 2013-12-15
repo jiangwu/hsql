@@ -15,37 +15,40 @@ public class QueryTestTable {
 	 * @param args
 	 * @throws Exception
 	 */
-	public static void main(String[] args) throws Exception {
+	public static long run() throws Exception {
 		String tableName = TestSetting.tableName;
 		UserTable table = UserTableFactory.getTable(tableName);
 
 
+		int colSize=TestSetting.colSize;
 		table.open();
 		Random random = new Random();
 		long totalTime=0;
 
 		for (int j = 0; j < 100; j++) {
-			long t1 = System.currentTimeMillis();
+			long t1 = System.nanoTime();
 			Map<String, String> indexes = new HashMap<String, String>();
 
 			for (String col : TestSetting.indexCol) {
-				indexes.put(col, String.format("%02d", random.nextInt(16)));
+				indexes.put(col, String.format("%02d", random.nextInt(colSize)));
 			}
 
 			Iterable<UserRow> res = table.select(indexes);
 			Iterator<UserRow> it = res.iterator();
 			if (it.hasNext()) {
 				UserRow row = it.next();
-				System.out.println("takes " + (System.currentTimeMillis() - t1)
-						+ " ms get key " + row.getKey());
+				System.out.println("takes " + (System.nanoTime() - t1)
+						+ " ns get key " + row.getKey());
 			}else{
 				System.out.println("Didn't find");
 			}
-			totalTime=totalTime+(System.currentTimeMillis() - t1);
+			totalTime=totalTime+(System.nanoTime() - t1);
 		}
 
-		System.out.println("Average "+(totalTime/100)+ " for 1 row");
+		System.out.println("Average "+(totalTime/100)+ " ns for 1 row");
 		table.close();
+		
+		return totalTime/100;
 
 	}
 

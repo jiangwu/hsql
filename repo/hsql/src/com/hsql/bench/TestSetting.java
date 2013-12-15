@@ -1,10 +1,11 @@
 package com.hsql.bench;
 
-public interface TestSetting {
+public class TestSetting {
 
-	static String tableName="test";
+	public static String tableName="test";
 
-	static String[] indexCol = new String[] { "c1", "c2", "c3", "c4", "c5" };
+	public static String[] indexCol = new String[] { "c1", "c2", "c3", "c4", "c5" };
+	public static int colSize=5;
 	
 
 }
