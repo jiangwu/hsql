@@ -10,8 +10,6 @@ import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 
-import org.junit.Test;
-
 class IndexCreator {
 	/**
 	 * 
@@ -88,22 +86,28 @@ class IndexCreator {
 
 	}
 	
-	public static String getSearchKey(Map<String, String> indexes, TreeSet<String> indexNames){
+	public static String getSearchKey(Map<String, String> indexes, TreeSet<String> indexNames) throws Exception{
 		{
+			if(!indexNames.containsAll(indexes.keySet()))
+				throw new Exception(indexes+ "contains invalid index column");
 			TreeMap<String, String> sortedIndexes = new TreeMap<String, String>();
 			sortedIndexes.putAll(indexes);
-
-			StringBuffer key = new StringBuffer();
-			int count = 0;
-			for (String col : sortedIndexes.keySet()) {
-				key.append(col);
-				key.append("=");
-				key.append(sortedIndexes.get(col));
-				key.append("|");
+			
+			Map<String, Integer> nameSeq=new HashMap<String, Integer>();
+			int count=0;
+			for(String name: indexNames){
+				nameSeq.put(name, count);
 				count++;
 			}
 
-			int prefix;
+			StringBuffer key = new StringBuffer();
+			for (String col : sortedIndexes.keySet()) {
+				key.append("~");
+				key.append(nameSeq.get(col));
+				key.append(sortedIndexes.get(col));
+			}
+
+			int groupId;
 			boolean containLast = false;
 			// if one col is the last col in all indexed cols
 			if (indexNames.descendingSet().first()
@@ -112,11 +116,11 @@ class IndexCreator {
 			}
 
 			if (containLast)
-				prefix = indexNames.size() - count;
+				groupId = indexNames.size() - indexes.size();
 			else
-				prefix = indexNames.size() - count - 1;
+				groupId = indexNames.size() - indexes.size() - 1;
 
-			String searchKey = prefix + "_" + key.substring(0, key.length() - 1);
+			String searchKey = groupId + key.toString();
 			return searchKey;
 		}
 	}
@@ -125,8 +129,12 @@ class IndexCreator {
 	 * thread safe
 	 * @param indexCol contains column => value pairs
 	 * @return a list of keys used to find primary key
+	 * @throws Exception 
 	 */
-	public static List<String> getIndexKeys(Map<String, String> indexCol, String pKey) {
+	public static List<String> getIndexKeys(Map<String, String> indexCol, String pKey, TreeSet<String> indexNames) throws Exception {
+		if(indexCol.size()>indexNames.size() || !indexNames.containsAll(indexCol.keySet())){
+			throw new Exception(indexCol+" contains invalid or insufficent indexes");
+		}
 		TreeMap<String, String> tree = new TreeMap<String, String>();
 		tree.putAll(indexCol);
 		String[] colName = new String[tree.size()];
@@ -155,27 +163,25 @@ class IndexCreator {
 
 		for (TreeSet<Integer> s : subs) {
 			s.add(keyLen - 1);
-			int prefix = keyLen - s.size();
+			int groupId = keyLen - s.size();
 
 			StringBuffer key = new StringBuffer();
-			key.append(prefix);
-			key.append("_");
+			key.append(groupId);
 			for (Integer i : s) {
-				key.append(colName[i]);
-				key.append("=");
+				key.append("~");
+				key.append(i);
 				key.append(colValue[i]);
-				key.append("|");
 			}
 
 			TreeSet<Integer> rem = difference(wholeSet, s);
 
+			//TODO can be delete ?
 			for (Integer i : rem) {
-				key.append("c");
+				key.append("~");
 				key.append(i);
-				key.append("=");
 				key.append(colValue[i]);
-				key.append("|");
 			}
+			key.append("~");
 			key.append(pKey);
 			keys.add(key.toString());
 		}

@@ -9,7 +9,7 @@ public interface UserTable {
 
 	void close();
 
-	void delete(String pk) throws IOException;
+	void delete(String pk) throws IOException, Exception;
 
 	void insert(String key, Map<String, String> allCols) throws Exception;
 

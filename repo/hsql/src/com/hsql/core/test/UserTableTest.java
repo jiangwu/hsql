@@ -38,7 +38,48 @@ public class UserTableTest {
 	}
 
 	@Test
-	public void test1() throws Exception {
+	public void testInsert1Select1() throws Exception {
+		UserTable table = UserTableFactory.getTable(tableName);
+		table.open();
+		Map<String, String> cols = new HashMap<String, String>();
+		cols.put("a1", "1");
+		cols.put("a2", "2");
+		cols.put("a3", "3");
+		cols.put("a4", "4");
+		cols.put("a5", "5");
+		cols.put("a6", "6");
+		table.insert("1", cols);
+
+		Map<String, String> indexes = new HashMap<String, String>();
+		indexes.put("a1", "1");
+
+		assertTrue(table.select(indexes).iterator().next().getKey().equals("1"));
+
+		indexes.clear();
+		indexes.put("a2", "2");
+
+		assertTrue(table.select(indexes).iterator().next().getKey().equals("1"));
+
+		indexes.clear();
+		indexes.put("a3", "3");
+
+		assertTrue(table.select(indexes).iterator().next().getKey().equals("1"));
+
+		indexes.clear();
+		indexes.put("a1", "1");
+		indexes.put("a3", "3");
+		assertTrue(table.select(indexes).iterator().next().getKey().equals("1"));
+
+		indexes.clear();
+		indexes.put("a2", "2");
+		indexes.put("a3", "3");
+		assertTrue(table.select(indexes).iterator().next().getKey().equals("1"));
+
+		table.close();
+	}
+	
+	@Test
+	public void testInsert2Select1() throws Exception {
 		UserTable table = UserTableFactory.getTable(tableName);
 		table.open();
 		Map<String, String> cols = new HashMap<String, String>();
@@ -60,38 +101,101 @@ public class UserTableTest {
 		table.insert("2", cols);
 
 		Map<String, String> indexes = new HashMap<String, String>();
-		indexes.put("a1", "1");
+		indexes.put("a1", "a");
 
-		assertTrue(table.select(indexes).iterator().next().getKey().equals("1"));
-
-		indexes = new HashMap<String, String>();
-		indexes.put("a2", "b");
 		assertTrue(table.select(indexes).iterator().next().getKey().equals("2"));
 
-		table.delete("2");
-		assertTrue(table.select(indexes).iterator().hasNext() == false);
+		indexes.clear();
+		indexes.put("a2", "b");
 
-		cols = new HashMap<String, String>();
+		assertTrue(table.select(indexes).iterator().next().getKey().equals("2"));
+
+		indexes.clear();
+		indexes.put("a3", "c");
+
+		assertTrue(table.select(indexes).iterator().next().getKey().equals("2"));
+
+		indexes.clear();
+		indexes.put("a1", "a");
+		indexes.put("a3", "c");
+		assertTrue(table.select(indexes).iterator().next().getKey().equals("2"));
+
+		indexes.clear();
+		indexes.put("a2", "b");
+		indexes.put("a3", "c");
+		assertTrue(table.select(indexes).iterator().next().getKey().equals("2"));
+
+		
+
+		table.close();
+	}
+	
+	
+	@Test
+	public void testInsert2Select2() throws Exception {
+		UserTable table = UserTableFactory.getTable(tableName);
+		table.open();
+		Map<String, String> cols = new HashMap<String, String>();
 		cols.put("a1", "1");
-		cols.put("a2", "22");
+		cols.put("a2", "2");
 		cols.put("a3", "3");
 		cols.put("a4", "4");
 		cols.put("a5", "5");
 		cols.put("a6", "6");
-		table.insert("3", cols);
+		table.insert("1", cols);
 
-		indexes.clear();
-		indexes.put("a2", "22");
-		assertTrue(table.select(indexes).iterator().next().getKey().equals("3"));
+		cols = new HashMap<String, String>();
+		cols.put("a1", "a");
+		cols.put("a2", "2");
+		cols.put("a3", "3");
+		cols.put("a4", "d");
+		cols.put("a5", "e");
+		cols.put("a6", "f");
+		table.insert("2", cols);
 
-		indexes.clear();
+		Map<String, String> indexes = new HashMap<String, String>();
+		indexes.put("a2", "2");
 		indexes.put("a3", "3");
-		Iterator<UserRow> it = table.select(indexes).iterator();
-		Set<String> keys = new HashSet<String>();
-		keys.add(it.next().getKey());
-		keys.add(it.next().getKey());
 
-		assertTrue(keys.contains("1") && keys.contains("3"));
+		Iterator<UserRow> it = table.select(indexes).iterator();
+		Set<String> keys=new HashSet<String>();
+		keys.add(it.next().getKey());
+		keys.add(it.next().getKey());
+		
+		Set<String> expectedKeys=new HashSet<String>();
+		expectedKeys.add("1");
+		expectedKeys.add("2");
+		
+		assertTrue(keys.containsAll(expectedKeys) && keys.size()==2);
+
+		table.close();
+	}
+	
+	@Test
+	public void testDelete() throws Exception{
+		UserTable table = UserTableFactory.getTable(tableName);
+		table.open();
+		Map<String, String> cols = new HashMap<String, String>();
+		cols.put("a1", "1");
+		cols.put("a2", "2");
+		cols.put("a3", "3");
+		cols.put("a4", "4");
+		cols.put("a5", "5");
+		cols.put("a6", "6");
+		table.insert("1", cols);
+		
+		Map<String, String> indexes = new HashMap<String, String>();
+		indexes.put("a1", "1");
+
+		assertTrue(table.select(indexes).iterator().next().getKey().equals("1"));
+
+		
+		table.delete("1");
+
+
+		assertTrue(table.select(indexes).iterator().hasNext()==false);
+
+
 
 		table.close();
 	}

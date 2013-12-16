@@ -45,7 +45,12 @@ public class Console {
 						System.out.println("cannot open table");
 						continue;
 					}
-					userTable.delete(pk);
+					try {
+						userTable.delete(pk);
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 					userTable.close();
 					
 				}else if(token[0].equals("get")){

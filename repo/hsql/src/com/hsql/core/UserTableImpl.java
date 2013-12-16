@@ -85,7 +85,7 @@ class UserTableImpl implements UserTable {
 	}
 
 	@Override
-	public void delete(String pk) throws IOException {
+	public void delete(String pk) throws Exception {
 		Get get = new Get(pk.getBytes());
 		Result rs = userHTable.get(get);
 		NavigableMap<byte[], byte[]> kv = rs.getNoVersionMap().values()
@@ -96,7 +96,7 @@ class UserTableImpl implements UserTable {
 				indexes.put(new String(col), new String(kv.get(col)));
 			}
 		}
-		List<String> indexKeys = IndexCreator.getIndexKeys(indexes, pk);
+		List<String> indexKeys = IndexCreator.getIndexKeys(indexes, pk, indexNames);
 
 		Delete delete = new Delete(pk.getBytes());
 		userHTable.delete(delete);
@@ -164,7 +164,7 @@ class UserTableImpl implements UserTable {
 
 		userHTable.put(puts);
 
-		List<String> indexes = IndexCreator.getIndexKeys(indexCol, key);
+		List<String> indexes = IndexCreator.getIndexKeys(indexCol, key, indexNames);
 
 		puts.clear();
 		for (String index : indexes) {
@@ -207,7 +207,8 @@ class UserTableImpl implements UserTable {
 
 			@Override
 			public boolean hasNext() {
-				if (it.hasNext() == false) {
+				boolean res=it.hasNext() == false;
+				if (res==false) {
 					rs.close();
 				}
 				return it.hasNext();
@@ -239,35 +240,6 @@ class UserTableImpl implements UserTable {
 	private ResultScanner getScanner(Map<String, String> indexes)
 			throws Exception {
 		String searchKey=IndexCreator.getSearchKey(indexes, indexNames);
-//		{
-//			TreeMap<String, String> sortedIndexes = new TreeMap<String, String>();
-//			sortedIndexes.putAll(indexes);
-//
-//			StringBuffer key = new StringBuffer();
-//			int count = 0;
-//			for (String col : sortedIndexes.keySet()) {
-//				key.append(col);
-//				key.append("=");
-//				key.append(sortedIndexes.get(col));
-//				key.append("|");
-//				count++;
-//			}
-//
-//			int prefix;
-//			boolean containLast = false;
-//			// if one col is the last col in all indexed cols
-//			if (indexNames.descendingSet().first()
-//					.equals(sortedIndexes.descendingKeySet().first())) {
-//				containLast = true;
-//			}
-//
-//			if (containLast)
-//				prefix = indexNames.size() - count;
-//			else
-//				prefix = indexNames.size() - count - 1;
-//
-//			searchKey = prefix + "_" + key.substring(0, key.length() - 1);
-//		}
 		Scan scan = new Scan();
 		byte[] startRow = searchKey.getBytes();
 		scan.setStartRow(startRow);
