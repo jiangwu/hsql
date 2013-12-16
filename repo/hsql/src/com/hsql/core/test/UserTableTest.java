@@ -3,9 +3,11 @@ package com.hsql.core.test;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -77,7 +79,7 @@ public class UserTableTest {
 
 		table.close();
 	}
-	
+
 	@Test
 	public void testInsert2Select1() throws Exception {
 		UserTable table = UserTableFactory.getTable(tableName);
@@ -125,12 +127,9 @@ public class UserTableTest {
 		indexes.put("a3", "c");
 		assertTrue(table.select(indexes).iterator().next().getKey().equals("2"));
 
-		
-
 		table.close();
 	}
-	
-	
+
 	@Test
 	public void testInsert2Select2() throws Exception {
 		UserTable table = UserTableFactory.getTable(tableName);
@@ -158,21 +157,21 @@ public class UserTableTest {
 		indexes.put("a3", "3");
 
 		Iterator<UserRow> it = table.select(indexes).iterator();
-		Set<String> keys=new HashSet<String>();
+		Set<String> keys = new HashSet<String>();
 		keys.add(it.next().getKey());
 		keys.add(it.next().getKey());
-		
-		Set<String> expectedKeys=new HashSet<String>();
+
+		Set<String> expectedKeys = new HashSet<String>();
 		expectedKeys.add("1");
 		expectedKeys.add("2");
-		
-		assertTrue(keys.containsAll(expectedKeys) && keys.size()==2);
+
+		assertTrue(keys.containsAll(expectedKeys) && keys.size() == 2);
 
 		table.close();
 	}
-	
+
 	@Test
-	public void testDelete() throws Exception{
+	public void testOr() throws Exception {
 		UserTable table = UserTableFactory.getTable(tableName);
 		table.open();
 		Map<String, String> cols = new HashMap<String, String>();
@@ -183,19 +182,72 @@ public class UserTableTest {
 		cols.put("a5", "5");
 		cols.put("a6", "6");
 		table.insert("1", cols);
+
+		cols = new HashMap<String, String>();
+		cols.put("a1", "a");
+		cols.put("a2", "b");
+		cols.put("a3", "3");
+		cols.put("a4", "d");
+		cols.put("a5", "e");
+		cols.put("a6", "f");
+		table.insert("2", cols);
 		
+		cols = new HashMap<String, String>();
+		cols.put("a1", "a");
+		cols.put("a2", "A");
+		cols.put("a3", "3");
+		cols.put("a4", "d");
+		cols.put("a5", "e");
+		cols.put("a6", "f");
+		table.insert("3", cols);
+		
+
+		Map<String, String> block1 = new HashMap<String, String>();
+		block1.put("a2", "2");
+
+		Map<String, String> block2 = new HashMap<String, String>();
+		block2.put("a2", "b");
+
+		List<Map<String, String>> indexBlocks = new ArrayList<Map<String, String>>();
+		indexBlocks.add(block1);
+		indexBlocks.add(block2);
+
+		Iterator<UserRow> it = table.select(indexBlocks).iterator();
+		Set<String> keys = new HashSet<String>();
+		while (it.hasNext()) {
+			keys.add(it.next().getKey());
+		}
+
+		Set<String> expectedKeys = new HashSet<String>();
+		expectedKeys.add("1");
+		expectedKeys.add("2");
+
+		assertTrue(keys.containsAll(expectedKeys) && keys.size() == 2);
+
+		table.close();
+	}
+
+	@Test
+	public void testDelete() throws Exception {
+		UserTable table = UserTableFactory.getTable(tableName);
+		table.open();
+		Map<String, String> cols = new HashMap<String, String>();
+		cols.put("a1", "1");
+		cols.put("a2", "2");
+		cols.put("a3", "3");
+		cols.put("a4", "4");
+		cols.put("a5", "5");
+		cols.put("a6", "6");
+		table.insert("1", cols);
+
 		Map<String, String> indexes = new HashMap<String, String>();
 		indexes.put("a1", "1");
 
 		assertTrue(table.select(indexes).iterator().next().getKey().equals("1"));
 
-		
 		table.delete("1");
 
-
-		assertTrue(table.select(indexes).iterator().hasNext()==false);
-
-
+		assertTrue(table.select(indexes).iterator().hasNext() == false);
 
 		table.close();
 	}

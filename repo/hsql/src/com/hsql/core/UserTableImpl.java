@@ -293,41 +293,60 @@ class UserTableImpl implements UserTable {
 			}
 		}
 		class ORIterator implements Iterator<UserRow> {
-			Map<String,String> currentIndex;
-			RowIterable currentRowIterable;
 			Iterator<UserRow> currentRowIterator;
 			List<Map<String, String>> usedIndexes=new ArrayList<Map<String,String>>();
+			private UserRow row4next;
+			private int currentIndexSeq;
 			
 			public ORIterator() throws Exception{
-				RowIterable currentRowIterable=new RowIterable(indexBlocks.get(0));
-				currentRowIterator=currentRowIterable.iterator();
-				currentIndex=indexBlocks.get(0);
+				currentRowIterator=new RowIterable(indexBlocks.get(0)).iterator();
+				currentIndexSeq=0;
+			}
+			
+			private boolean alreadyGet(UserRow row){
+				for(Map<String, String> indexes: usedIndexes){
+					boolean allMatch=true;
+					for(Entry<String, String> e: indexes.entrySet()){
+						if(!row.getIndexedCols().get(e.getKey()).equals(e.getValue())){
+							allMatch=false;
+						}
+					}
+					if(allMatch==true){
+						return true;
+					}
+				}
+				return false;
 			}
 
 			@Override
 			public boolean hasNext() {
-					if(usedIndexes.size()==0){
-						if(currentRowIterator.hasNext()==true){
-							return true;
-						}else{
-							usedIndexes.add(currentIndex);
-							currentIndex=indexBlocks.get(usedIndexes.size());
-							try {
-								currentRowIterable=new RowIterable(currentIndex);
-							} catch (Exception e) {
-								throw new RuntimeException(e);
-							}
-							currentRowIterator=currentRowIterable.iterator();
-							while()
-						}
+				while(currentRowIterator.hasNext()){
+					row4next=currentRowIterator.next();
+					if(alreadyGet(row4next)){
+						continue;
+					}else{
+						return true;
 					}
+				}
+				usedIndexes.add(indexBlocks.get(currentIndexSeq));
+				currentIndexSeq++;
+				
+				if(currentIndexSeq>=indexBlocks.size()){
+					row4next=null;
+					return false;
+				}else{
+					try {
+						currentRowIterator=new RowIterable(indexBlocks.get(currentIndexSeq)).iterator();
+					} catch (Exception e) {
+						throw new RuntimeException(e);
+					}
+					return hasNext();
+				}				
 			}
 
 			@Override
 			public UserRow next() {
-				if(usedIndexes.size()==0){
-					return currentRowIterator.next();
-				}
+				return row4next;
 				
 
 			}
@@ -344,12 +363,8 @@ class UserTableImpl implements UserTable {
 	@Override
 	public Iterable<UserRow> select(List<Map<String, String>> indexBlocks)
 			throws Exception {
-		List<Map<String, String>> usedConditions=new ArrayList<Map<String, String>>();
-		int i=0;
-		for(Map<String,String> indexes: indexBlocks){
-			
-		}
-		return null;
+
+		return new ORIterable(indexBlocks);
 	}
 
 }
