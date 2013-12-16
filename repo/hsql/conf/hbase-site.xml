@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<configuration>
+	<property>
+		<name>hbase.zookeeper.quorum</name>
+		<value>localhost</value>
+	</property>
+	<property>
+		<name>hbase.client.scanner.caching</name>
+		<value>100</value>
+	</property>
+	<property>
+        <name>hbase.client.keyvalue.maxsize</name>
+        <value>52428800</value>
+    </property>
+</configuration>
