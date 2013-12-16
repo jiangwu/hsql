@@ -3,14 +3,11 @@ package com.hsql.core;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.NavigableMap;
-import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
 
 import org.apache.hadoop.hbase.client.Delete;
@@ -20,7 +17,8 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
-import org.junit.Test;
+
+import com.hsql.core.UserTableImpl.RowIterable.RowIterator;
 
 /**
  * 
@@ -277,6 +275,81 @@ class UserTableImpl implements UserTable {
 		row.setNonIndexedCols(unIndexedCol);
 		row.setKey(primaryKey);
 		return row;
+	}
+	
+	class ORIterable implements Iterable<UserRow>{
+
+		private List<Map<String, String>> indexBlocks;
+		public ORIterable(List<Map<String, String>> indexBlocks){
+			this.indexBlocks=indexBlocks;
+		}
+		@Override
+		public Iterator<UserRow> iterator() {
+
+			try {
+				return new ORIterator();
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		}
+		class ORIterator implements Iterator<UserRow> {
+			Map<String,String> currentIndex;
+			RowIterable currentRowIterable;
+			Iterator<UserRow> currentRowIterator;
+			List<Map<String, String>> usedIndexes=new ArrayList<Map<String,String>>();
+			
+			public ORIterator() throws Exception{
+				RowIterable currentRowIterable=new RowIterable(indexBlocks.get(0));
+				currentRowIterator=currentRowIterable.iterator();
+				currentIndex=indexBlocks.get(0);
+			}
+
+			@Override
+			public boolean hasNext() {
+					if(usedIndexes.size()==0){
+						if(currentRowIterator.hasNext()==true){
+							return true;
+						}else{
+							usedIndexes.add(currentIndex);
+							currentIndex=indexBlocks.get(usedIndexes.size());
+							try {
+								currentRowIterable=new RowIterable(currentIndex);
+							} catch (Exception e) {
+								throw new RuntimeException(e);
+							}
+							currentRowIterator=currentRowIterable.iterator();
+							while()
+						}
+					}
+			}
+
+			@Override
+			public UserRow next() {
+				if(usedIndexes.size()==0){
+					return currentRowIterator.next();
+				}
+				
+
+			}
+
+			@Override
+			public void remove() {
+
+				
+			}
+			
+		}
+	}
+
+	@Override
+	public Iterable<UserRow> select(List<Map<String, String>> indexBlocks)
+			throws Exception {
+		List<Map<String, String>> usedConditions=new ArrayList<Map<String, String>>();
+		int i=0;
+		for(Map<String,String> indexes: indexBlocks){
+			
+		}
+		return null;
 	}
 
 }

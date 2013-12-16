@@ -1,6 +1,7 @@
 package com.hsql.core;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 public interface UserTable {
@@ -14,5 +15,8 @@ public interface UserTable {
 	void insert(String key, Map<String, String> allCols) throws Exception;
 
 	Iterable<UserRow> select(Map<String, String> indexes) throws Exception;
+	
+	Iterable<UserRow> select(List<Map<String, String>> indexBlocks) throws Exception;
+	
 
 }
