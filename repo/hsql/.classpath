@@ -93,5 +93,6 @@
 	<classpathentry kind="lib" path="lib/hadoop-common-2.0.0-cdh4.1.1.jar"/>
 	<classpathentry kind="lib" path="lib/hbase-0.92.1-cdh4.1.1-security-tests.jar"/>
 	<classpathentry kind="lib" path="lib/hbase-0.92.1-cdh4.1.1-security.jar"/>
+	<classpathentry kind="lib" path="conf"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
