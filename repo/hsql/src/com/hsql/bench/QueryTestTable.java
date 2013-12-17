@@ -27,13 +27,16 @@ public class QueryTestTable {
 
 		for (int j = 0; j < 100; j++) {
 			long t1 = System.nanoTime();
-			Map<String, String> indexes = new HashMap<String, String>();
 
+			StringBuffer sb=new StringBuffer();
 			for (String col : TestSetting.indexCol) {
-				indexes.put(col, String.format("%02d", random.nextInt(colSize)));
+				sb.append(col);
+				sb.append("=");
+				sb.append(String.format("%02d", random.nextInt(colSize)));
+				sb.append(" and ");
 			}
 
-			Iterable<UserRow> res = table.select(indexes);
+			Iterable<UserRow> res = table.select(sb.substring(0, sb.length()-5));
 			Iterator<UserRow> it = res.iterator();
 			if (it.hasNext()) {
 				UserRow row = it.next();

@@ -229,8 +229,8 @@ class UserTableImpl implements UserTable {
 		}
 	}
 
-	@Override
-	public Iterable<UserRow> select(Map<String, String> indexes)
+	
+	private Iterable<UserRow> select(Map<String, String> indexes)
 			throws Exception {
 		return new RowIterable(indexes);
 	}
@@ -360,11 +360,39 @@ class UserTableImpl implements UserTable {
 		}
 	}
 
-	@Override
-	public Iterable<UserRow> select(List<Map<String, String>> indexBlocks)
+	private Iterable<UserRow> select(List<Map<String, String>> indexBlocks)
 			throws Exception {
 
 		return new ORIterable(indexBlocks);
+	}
+
+	
+	List<Map<String, String>> parse(String command) throws Exception{
+		try{
+		List<Map<String, String>>  res=new ArrayList<Map<String, String>> ();
+		String [] andCommands=command.split("or");
+		for(String s:andCommands){
+			Map<String, String> block=new HashMap<String, String>();
+			String [] indexes=s.split("and");
+			for(String index:indexes){
+				String [] kv=index.split("=");
+				block.put(kv[0].trim(), kv[1].trim());
+			}
+			res.add(block);
+		}
+		return res;
+		}catch(Exception e){
+			throw new Exception("cannot parse command "+ command, e);
+		}
+	}
+	@Override
+	public Iterable<UserRow> select(String condition) throws Exception {
+		List<Map<String, String>> blocks=parse(condition);
+		for(Map<String, String> block:blocks){
+			if(!indexNames.containsAll(block.keySet()))
+				throw new Exception(condition+ "contains invalid index column");
+		}
+		return select(blocks);
 	}
 
 }

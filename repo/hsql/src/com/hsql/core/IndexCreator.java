@@ -86,10 +86,8 @@ class IndexCreator {
 
 	}
 	
-	public static String getSearchKey(Map<String, String> indexes, TreeSet<String> indexNames) throws Exception{
+	static String getSearchKey(Map<String, String> indexes, TreeSet<String> indexNames) throws Exception{
 		{
-			if(!indexNames.containsAll(indexes.keySet()))
-				throw new Exception(indexes+ "contains invalid index column");
 			TreeMap<String, String> sortedIndexes = new TreeMap<String, String>();
 			sortedIndexes.putAll(indexes);
 			

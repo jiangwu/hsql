@@ -63,12 +63,18 @@ public class Console {
 						continue;
 					}
 					Map<String, String> cols=new HashMap<String, String>();
+					StringBuffer sb=new StringBuffer();
 					for(int i=2;i<token.length;i++){
 						String[]kv=token[i].split("=");
 						cols.put(kv[0].trim(), kv[1].trim());
+						sb.append(kv[0].trim());
+						sb.append("=");
+						sb.append(kv[1].trim());
+						sb.append(" and ");
+						
 					}
 					try {
-						Iterable<UserRow> res = userTable.select(cols);
+						Iterable<UserRow> res = userTable.select(sb.substring(0, sb.length()-5));
 						for(UserRow row:res){
 							Utils.printRow(row);
 									
