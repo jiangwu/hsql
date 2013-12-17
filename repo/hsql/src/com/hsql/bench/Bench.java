@@ -13,7 +13,7 @@ public class Bench {
 		List<List<Long>> res=new ArrayList<List<Long>>();
 		for(int colSize=4;colSize<=16;colSize+=4){
 			TestSetting.colSize=colSize;
-			CreateTestTable.run();
+			CreateTestTable.create();
 			long queryTime=QueryTestTable.run();
 			long scanTime=ScanTestTable.run();
 

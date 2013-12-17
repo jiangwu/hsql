@@ -43,14 +43,8 @@ public class UserTableTest {
 	public void testInsert1Select1() throws Exception {
 		UserTable table = UserTableFactory.getTable(tableName);
 		table.open();
-		Map<String, String> cols = new HashMap<String, String>();
-		cols.put("a1", "1");
-		cols.put("a2", "2");
-		cols.put("a3", "3");
-		cols.put("a4", "4");
-		cols.put("a5", "5");
-		cols.put("a6", "6");
-		table.insert("1", cols);
+
+		table.insert("1", "a1=1 a2=2 a3=3 a4=4 a5=5 a6=6");
 
 		Iterator<UserRow> it = table.select("a1=1").iterator();
 		assertTrue(it.hasNext());
@@ -80,23 +74,11 @@ public class UserTableTest {
 	public void testInsert2Select1() throws Exception {
 		UserTable table = UserTableFactory.getTable(tableName);
 		table.open();
-		Map<String, String> cols = new HashMap<String, String>();
-		cols.put("a1", "1");
-		cols.put("a2", "2");
-		cols.put("a3", "3");
-		cols.put("a4", "4");
-		cols.put("a5", "5");
-		cols.put("a6", "6");
-		table.insert("1", cols);
 
-		cols = new HashMap<String, String>();
-		cols.put("a1", "a");
-		cols.put("a2", "b");
-		cols.put("a3", "c");
-		cols.put("a4", "d");
-		cols.put("a5", "e");
-		cols.put("a6", "f");
-		table.insert("2", cols);
+		table.insert("1", "a1=1 a2=2 a3=3 a4=4 a5=5 a6=6");
+
+
+		table.insert("2", "a1=a a2=b a3=c a4=d a5=e a6=f");
 		
 		Iterator<UserRow> it = table.select("a1=a").iterator();
 		assertTrue(it.hasNext());
@@ -125,23 +107,11 @@ public class UserTableTest {
 	public void testInsert2Select2() throws Exception {
 		UserTable table = UserTableFactory.getTable(tableName);
 		table.open();
-		Map<String, String> cols = new HashMap<String, String>();
-		cols.put("a1", "1");
-		cols.put("a2", "2");
-		cols.put("a3", "3");
-		cols.put("a4", "4");
-		cols.put("a5", "5");
-		cols.put("a6", "6");
-		table.insert("1", cols);
 
-		cols = new HashMap<String, String>();
-		cols.put("a1", "a");
-		cols.put("a2", "2");
-		cols.put("a3", "3");
-		cols.put("a4", "d");
-		cols.put("a5", "e");
-		cols.put("a6", "f");
-		table.insert("2", cols);
+		table.insert("1", "a1=1 a2=2 a3=3 a4=4 a5=5 a6=6");
+
+
+		table.insert("2", "a1=a a2=2 a3=3 a4=d a5=e a6=f");
 
 
 
@@ -165,32 +135,14 @@ public class UserTableTest {
 	public void testOr() throws Exception {
 		UserTable table = UserTableFactory.getTable(tableName);
 		table.open();
-		Map<String, String> cols = new HashMap<String, String>();
-		cols.put("a1", "1");
-		cols.put("a2", "2");
-		cols.put("a3", "3");
-		cols.put("a4", "4");
-		cols.put("a5", "5");
-		cols.put("a6", "6");
-		table.insert("1", cols);
 
-		cols = new HashMap<String, String>();
-		cols.put("a1", "a");
-		cols.put("a2", "b");
-		cols.put("a3", "3");
-		cols.put("a4", "d");
-		cols.put("a5", "e");
-		cols.put("a6", "f");
-		table.insert("2", cols);
+		table.insert("1", "a1=1 a2=2 a3=3 a4=4 a5=5 a6=6");
+
+
+		table.insert("2", "a1=a a2=b a3=3 a4=d a5=e a6=f");
 		
-		cols = new HashMap<String, String>();
-		cols.put("a1", "a");
-		cols.put("a2", "A");
-		cols.put("a3", "3");
-		cols.put("a4", "d");
-		cols.put("a5", "e");
-		cols.put("a6", "f");
-		table.insert("3", cols);
+
+		table.insert("3", "a1=a a2=A a3=3 a4=d a5=e a6=f");
 		
 
 		Iterator<UserRow> it = table.select("a2=2 or a2=b").iterator();
@@ -212,14 +164,8 @@ public class UserTableTest {
 	public void testDelete() throws Exception {
 		UserTable table = UserTableFactory.getTable(tableName);
 		table.open();
-		Map<String, String> cols = new HashMap<String, String>();
-		cols.put("a1", "1");
-		cols.put("a2", "2");
-		cols.put("a3", "3");
-		cols.put("a4", "4");
-		cols.put("a5", "5");
-		cols.put("a6", "6");
-		table.insert("1", cols);
+
+		table.insert("1", "a1=1 a2=2 a3=3 a4=4 a5=5 a6=6");
 
 		Map<String, String> indexes = new HashMap<String, String>();
 		indexes.put("a1", "1");
@@ -243,14 +189,8 @@ public class UserTableTest {
 	public void testCommandSingle() throws Exception {
 		UserTable table = UserTableFactory.getTable(tableName);
 		table.open();
-		Map<String, String> cols = new HashMap<String, String>();
-		cols.put("a1", "1");
-		cols.put("a2", "2");
-		cols.put("a3", "3");
-		cols.put("a4", "4");
-		cols.put("a5", "5");
-		cols.put("a6", "6");
-		table.insert("1", cols);
+
+		table.insert("1", "a1=1 a2=2 a3=3 a4=4 a5=5 a6=6");
 
 		Iterator<UserRow> it = table.select("a2=2").iterator();
 		assertTrue(it.hasNext()==true);
@@ -264,32 +204,14 @@ public class UserTableTest {
 	public void testCommands() throws Exception {
 		UserTable table = UserTableFactory.getTable(tableName);
 		table.open();
-		Map<String, String> cols = new HashMap<String, String>();
-		cols.put("a1", "1");
-		cols.put("a2", "2");
-		cols.put("a3", "3");
-		cols.put("a4", "4");
-		cols.put("a5", "5");
-		cols.put("a6", "6");
-		table.insert("1", cols);
 
-		cols = new HashMap<String, String>();
-		cols.put("a1", "a");
-		cols.put("a2", "b");
-		cols.put("a3", "3");
-		cols.put("a4", "d");
-		cols.put("a5", "e");
-		cols.put("a6", "f");
-		table.insert("2", cols);
+		table.insert("1", "a1=1 a2=2 a3=3 a4=4 a5=5 a6=6");
+
+
+		table.insert("2", "a1=a a2=b a3=3 a4=d a5=e a6=f");
 		
-		cols = new HashMap<String, String>();
-		cols.put("a1", "a");
-		cols.put("a2", "A");
-		cols.put("a3", "B");
-		cols.put("a4", "d");
-		cols.put("a5", "e");
-		cols.put("a6", "f");
-		table.insert("3", cols);
+
+		table.insert("3", "a1=a a2=A a3=B a4=d a5=e a6=f");
 		
 		Iterator<UserRow> it = table.select("a1=a and a2=b").iterator();
 		assertTrue(it.hasNext());
@@ -323,14 +245,8 @@ public class UserTableTest {
 	public void testInsertLackIndex() throws Exception {
 		UserTable table = UserTableFactory.getTable(tableName);
 		table.open();
-		Map<String, String> cols = new HashMap<String, String>();
 
-		cols.put("a2", "2");
-		cols.put("a3", "3");
-		cols.put("a4", "4");
-		cols.put("a5", "5");
-		cols.put("a6", "6");
-		table.insert("1", cols);
+		table.insert("1", "a2=2 a3=3 a4=4 a5=5 a6=6");
 
 		table.close();
 	}

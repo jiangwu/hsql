@@ -12,8 +12,8 @@ public interface UserTable {
 
 	void delete(String pk) throws IOException, Exception;
 
-	void insert(String key, Map<String, String> allCols) throws Exception;
-	
+
+	void insert(String key, String colValues) throws Exception;
 	Iterable<UserRow> select(String condition) throws Exception;
 	
 

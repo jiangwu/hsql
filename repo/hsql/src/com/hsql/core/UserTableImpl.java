@@ -120,8 +120,8 @@ class UserTableImpl implements UserTable {
 	 *            be included.
 	 * @throws Exception
 	 */
-	@Override
-	public void insert(String key, Map<String, String> allCols)
+	
+	private void insert(String key, Map<String, String> allCols)
 			throws Exception {
 
 		Get get = new Get(key.getBytes());
@@ -393,6 +393,18 @@ class UserTableImpl implements UserTable {
 				throw new Exception(condition+ "contains invalid index column");
 		}
 		return select(blocks);
+	}
+
+	@Override
+	public void insert(String key, String colValues) throws Exception {
+		Map<String, String > cols=new HashMap<String,String>();
+		String ss[]=colValues.split(" ");
+		for(String s:ss){
+			String[] kv = s.split("=");
+			cols.put(kv[0].trim(), kv[1].trim());
+		}
+		insert(key, cols);
+		
 	}
 
 }

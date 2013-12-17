@@ -94,13 +94,18 @@ public class Console {
 						System.out.println("cannot open table");
 						continue;
 					}
-					Map<String, String> cols=new HashMap<String, String>();
+					StringBuffer sb=new StringBuffer();
+
 					for(int i=3;i<token.length;i++){
 						String[]kv=token[i].split("=");
-						cols.put(kv[0].trim(), kv[1].trim());
+
+						sb.append(kv[0].trim());
+						sb.append("=");
+						sb.append(kv[1].trim());
+						sb.append(" ");
 					}
 					try {
-						userTable.insert(key, cols);
+						userTable.insert(key, sb.toString());
 					} catch (Exception e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
