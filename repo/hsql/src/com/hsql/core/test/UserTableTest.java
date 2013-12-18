@@ -3,11 +3,9 @@ package com.hsql.core.test;
 import static org.junit.Assert.assertTrue;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -51,6 +49,15 @@ public class UserTableTest {
 		assertTrue(it.hasNext());
 		assertTrue(it.next().getKey().equals("1"));
 		assertTrue(it.hasNext()==false);
+		
+		it = table.select("a1=123").iterator();
+		assertTrue(it.hasNext());
+		assertTrue(it.next().getKey().equals("2"));
+		assertTrue(it.hasNext()==false);
+		
+		it = table.select("a1=12").iterator();
+		assertTrue(it.hasNext()==false);
+		
 		
 		table.delete("1");
 		table.delete("2");
@@ -289,8 +296,6 @@ public class UserTableTest {
 	public void testSelectWrongIndex() throws Exception {
 		UserTable table = UserTableFactory.getTable(tableName);
 		table.open();
-
-
 		try {
 			table.select("a2=2 and a3=3 and a4=4");
 		} catch (Exception e) {
@@ -298,5 +303,4 @@ public class UserTableTest {
 			throw e;
 		}
 	}
-
 }
