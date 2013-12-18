@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -31,11 +32,12 @@ public class Console {
 					break;
 				String[] token=input.trim().split(" ");
 				if(token[0].equals("help")){
-					System.out.println("show index tableName");
-					System.out.println("put tableName primaryKey index1=value1 ...");
-					System.out.println("get tableName index1=value1 ...");
-					System.out.println("delete tableName primaryKey");
-				}if(token[0].equals("delete")){
+					System.out.println(" show index tableName");
+					System.out.println(" put tableName primaryKey index1=value1 ...");
+					System.out.println(" get tableName index1=value1 ...");
+					System.out.println(" delete tableName primaryKey");
+					System.out.println(" quit");
+				}else if(token[0].equals("delete")){
 					String tableName=token[1];
 					String pk=token[2];
 					UserTable userTable = UserTableFactory.getTable(tableName);;
@@ -62,23 +64,22 @@ public class Console {
 						System.out.println("cannot open table");
 						continue;
 					}
-					Map<String, String> cols=new HashMap<String, String>();
-					StringBuffer sb=new StringBuffer();
-					for(int i=2;i<token.length;i++){
-						String[]kv=token[i].split("=");
-						cols.put(kv[0].trim(), kv[1].trim());
-						sb.append(kv[0].trim());
-						sb.append("=");
-						sb.append(kv[1].trim());
-						sb.append(" and ");
-						
-					}
+					
+					String[] ss = input.split(tableName);
+					
 					try {
-						Iterable<UserRow> res = userTable.select(sb.substring(0, sb.length()-5));
+
+						Iterable<UserRow> res = userTable.select(ss[1]);
+
 						for(UserRow row:res){
+							
 							Utils.printRow(row);
-									
 						}
+//						Iterator<UserRow> it = res.iterator();
+//						while(it.hasNext()){
+//							Utils.printRow(it.next());
+//									
+//						}
 					} catch (Exception e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();

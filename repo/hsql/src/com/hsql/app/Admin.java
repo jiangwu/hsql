@@ -8,7 +8,9 @@ public class Admin {
 
 	public static void main(String[] args){
 		if(args.length<2 ){
-			System.out.println("Usage:\n create|delete tabelName [col1 col2 col3 ...]");
+			System.out.println("Usage:");
+			System.out.println(" create tabelName [col1 col2 col3 ...]");
+			System.out.println(" delete tabelName");
 			return;
 		}
 		String tableName=args[1];
@@ -17,7 +19,7 @@ public class Admin {
 		if(args[0].equals("create")){
 
 			if(args.length<3){
-				System.out.println("to create table, provide column list to be indexed");
+				System.out.println("ERROR. To create a table, provide column list to be indexed");
 				return;
 			}
 			String[] col=new String [args.length-2];
