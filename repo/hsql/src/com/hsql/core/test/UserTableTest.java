@@ -40,6 +40,25 @@ public class UserTableTest {
 	}
 
 	@Test
+	public void testValueLength() throws Exception {
+		UserTable table = UserTableFactory.getTable(tableName);
+		table.open();
+
+		table.insert("1", "a1=1 a2=2 a3=3 a4=4 a5=5 a6=6");
+		table.insert("2", "a1=123 a2=2 a3=3 a4=4 a5=5 a6=6");
+
+		Iterator<UserRow> it = table.select("a1=1").iterator();
+		assertTrue(it.hasNext());
+		assertTrue(it.next().getKey().equals("1"));
+		assertTrue(it.hasNext()==false);
+		
+		table.delete("1");
+		table.delete("2");
+
+		table.close();
+	}
+	
+	@Test
 	public void testInsert1Select1() throws Exception {
 		UserTable table = UserTableFactory.getTable(tableName);
 		table.open();
@@ -66,6 +85,7 @@ public class UserTableTest {
 		assertTrue(it.hasNext());
 		assertTrue(it.next().getKey().equals("1"));
 
+		table.delete("1");
 
 		table.close();
 	}
@@ -100,6 +120,8 @@ public class UserTableTest {
 		assertTrue(it.hasNext());
 		assertTrue(it.next().getKey().equals("2"));
 
+		table.delete("1");
+		table.delete("2");
 		table.close();
 	}
 
@@ -128,6 +150,8 @@ public class UserTableTest {
 
 		assertTrue(keys.containsAll(expectedKeys) && keys.size() == 2);
 
+		table.delete("1");
+		table.delete("2");
 		table.close();
 	}
 
@@ -157,6 +181,10 @@ public class UserTableTest {
 
 		assertTrue(keys.containsAll(expectedKeys) && keys.size() == 2);
 
+		table.delete("1");
+		table.delete("2");
+		table.delete("3");
+
 		table.close();
 	}
 
@@ -181,6 +209,7 @@ public class UserTableTest {
 		it = table.select("a1=1").iterator();
 		
 		assertTrue(it.hasNext() == false);
+		
 
 		table.close();
 	}
@@ -195,6 +224,8 @@ public class UserTableTest {
 		Iterator<UserRow> it = table.select("a2=2").iterator();
 		assertTrue(it.hasNext()==true);
 		assertTrue(it.next().getKey().equals("1"));
+
+		table.delete("1");
 
 
 		table.close();
@@ -237,6 +268,9 @@ public class UserTableTest {
 		assertTrue(it.hasNext()==false);
 		assertTrue(keys.contains("1") && keys.contains("3"));
 		
+		table.delete("1");
+		table.delete("2");
+		table.delete("3");
 
 		table.close();
 	}

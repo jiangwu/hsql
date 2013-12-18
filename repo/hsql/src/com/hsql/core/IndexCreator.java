@@ -104,6 +104,7 @@ class IndexCreator {
 				key.append(nameSeq.get(col));
 				key.append(sortedIndexes.get(col));
 			}
+			key.append("~");
 
 			int groupId;
 			boolean containLast = false;

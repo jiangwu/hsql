@@ -15,6 +15,5 @@ public interface UserTable {
 
 	void insert(String key, String colValues) throws Exception;
 	Iterable<UserRow> select(String condition) throws Exception;
-	
 
 }
