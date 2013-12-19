@@ -1,5 +1,5 @@
-This project provides efficient multi-column equality search for hbase. For any search based on multiple indexed columns, it takes O(log(n)) time where n is the number of row in the table.
-The core of this project is an index creating and query algorithm. For m index column, the algorithm generates 2^(m-1) indexes. For any of the 2^m combination of search conditions, the query algorithm searches the indexes with time complexity O(log(n)).
-The project also supports OR in the search condition. 
-The project provides two command line scripts. admin.sh is used to create and delete tables with indexes, and console.sh is used to insert and search the indexed tables.
+This project designs and implements an efficient multi-column indexing and search algorithm for Hbase, the Hadoop big data store. It builds indexes for multiple columns of a table, and search the table for any combination of equality of these columns in O(log(n)) time, where n is the number of rows in the table.
 
+The project provides a library with APIs to create, insert to and search indexed tables. It also provides two command line scripts for users to interactively perform these tasks.
+
+The indexing and search algorithm in this project can support certain range search on the indexed columns, but cannot support all possible combinations of equality and range conditions yet. For now range search is not implemented in this project.
