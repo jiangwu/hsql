@@ -48,7 +48,7 @@ public class Console {
 						continue;
 					}
 					try {
-						userTable.delete(pk);
+						userTable.deleteRow(pk);
 					} catch (Exception e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();

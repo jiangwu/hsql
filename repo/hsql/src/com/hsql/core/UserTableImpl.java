@@ -2,6 +2,7 @@ package com.hsql.core;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -10,8 +11,13 @@ import java.util.Map.Entry;
 import java.util.NavigableMap;
 import java.util.TreeSet;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.MasterNotRunningException;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.Delete;
 import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
@@ -34,9 +40,11 @@ class UserTableImpl implements UserTable {
 	private HTable indexHTable = null;
 	private TreeSet<String> indexNames = new TreeSet<String>();
 	private String tableName;
+	private String indexTableName;
 
 	public UserTableImpl(String tableName) {
 		this.tableName = tableName;
+		this.indexTableName=tableName+".Index";
 	}
 
 	/**
@@ -92,7 +100,7 @@ class UserTableImpl implements UserTable {
 	}
 
 	@Override
-	public void delete(String pk) throws Exception {
+	public void deleteRow(String pk) throws Exception {
 		Get get = new Get(pk.getBytes());
 		Result rs = userHTable.get(get);
 		NavigableMap<byte[], byte[]> kv = rs.getNoVersionMap().values()
@@ -138,7 +146,7 @@ class UserTableImpl implements UserTable {
 		Result rs = userHTable.get(get);
 		if (rs != null && rs.getRow() != null
 				&& new String(rs.getRow()).equals(key)) {
-			delete(key);
+			deleteRow(key);
 		}
 
 		Map<String, String> indexCol = new HashMap<String, String>();
@@ -173,17 +181,35 @@ class UserTableImpl implements UserTable {
 
 		userHTable.put(puts);
 
+		insertIndex(key, indexCol);
+
+		// List<String> indexes = IndexCreator.getIndexKeys(indexCol, key,
+		// indexNames);
+		//
+		// puts.clear();
+		// for (String index : indexes) {
+		// put = new Put((index).getBytes());
+		// put.add(indexColumnFamily, indexQualifier, key.getBytes());
+		// puts.add(put);
+		// }
+		// indexHTable.put(puts);
+
+	}
+
+
+	private void insertIndex(String key, Map<String, String> indexCol)
+			throws Exception {
 		List<String> indexes = IndexCreator.getIndexKeys(indexCol, key,
 				indexNames);
 
-		puts.clear();
+		List<Put> puts = new ArrayList<Put>();
 		for (String index : indexes) {
-			put = new Put((index).getBytes());
+
+			Put put = new Put((index).getBytes());
 			put.add(indexColumnFamily, indexQualifier, key.getBytes());
 			puts.add(put);
 		}
 		indexHTable.put(puts);
-
 	}
 
 	class RowIterable implements Iterable<UserRow> {
@@ -398,6 +424,49 @@ class UserTableImpl implements UserTable {
 		} catch (Exception e) {
 			throw new Exception("cannot parse command " + command, e);
 		}
+	}
+	
+	
+	@Override
+	public void reBuildIndex() throws Exception{
+		
+		HBaseAdmin admin=new HBaseAdmin(new Configuration());
+		HTableDescriptor desc = indexHTable.getTableDescriptor();
+		admin.disableTable(indexTableName);
+		admin.deleteTable(indexTableName);
+		admin.createTable(desc);
+		admin.close();
+		
+		Scan scan = new Scan();
+		for (String q : indexNames) {
+			scan.addColumn(userColumnFamily, q.getBytes());
+		}
+
+		
+		ResultScanner rs=userHTable.getScanner(scan);
+		Map<String, String> indexCols=new HashMap<String,String>();
+		int inCount=0;
+		int outCount=0;
+		for(Result res:rs){
+			inCount++;
+			indexCols.clear();
+			String key=new String(res.getRow());
+			Collection<NavigableMap<byte[],byte[]>> maps = res.getNoVersionMap().values();
+			for(NavigableMap<byte[],byte[]> map:maps){
+				for(Entry<byte[],byte[]> e : map.entrySet()){
+					String qualifier=new String(e.getKey());
+					String value=new String(e.getValue());
+					indexCols.put(qualifier, value);
+					outCount++;
+				}
+			}
+			insertIndex(key, indexCols);
+		}
+		rs.close();
+		
+		System.out.println("======in count "+inCount);
+		System.out.println("======out count "+outCount);
+		
 	}
 
 	@Override

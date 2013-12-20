@@ -120,8 +120,7 @@ class IndexCreator {
 				groupId = indexNames.size() - indexes.size() - 1;
 
 			String searchKey = groupId + key.toString();
-			
-			System.out.println("====search key is "+searchKey);
+
 			return searchKey;
 		}
 	}

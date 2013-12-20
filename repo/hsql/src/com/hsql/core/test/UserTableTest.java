@@ -60,8 +60,8 @@ public class UserTableTest {
 		assertTrue(it.hasNext()==false);
 		
 		
-		table.delete("1");
-		table.delete("2");
+		table.deleteRow("1");
+		table.deleteRow("2");
 
 		table.close();
 	}
@@ -93,7 +93,7 @@ public class UserTableTest {
 		assertTrue(it.hasNext());
 		assertTrue(it.next().getKey().equals("1"));
 
-		table.delete("1");
+		table.deleteRow("1");
 
 		table.close();
 	}
@@ -128,8 +128,8 @@ public class UserTableTest {
 		assertTrue(it.hasNext());
 		assertTrue(it.next().getKey().equals("2"));
 
-		table.delete("1");
-		table.delete("2");
+		table.deleteRow("1");
+		table.deleteRow("2");
 		table.close();
 	}
 
@@ -158,8 +158,8 @@ public class UserTableTest {
 
 		assertTrue(keys.containsAll(expectedKeys) && keys.size() == 2);
 
-		table.delete("1");
-		table.delete("2");
+		table.deleteRow("1");
+		table.deleteRow("2");
 		table.close();
 	}
 
@@ -189,9 +189,9 @@ public class UserTableTest {
 
 		assertTrue(keys.containsAll(expectedKeys) && keys.size() == 2);
 
-		table.delete("1");
-		table.delete("2");
-		table.delete("3");
+		table.deleteRow("1");
+		table.deleteRow("2");
+		table.deleteRow("3");
 
 		table.close();
 	}
@@ -212,7 +212,7 @@ public class UserTableTest {
 
 		assertTrue(it.next().getKey().equals("1"));
 
-		table.delete("1");
+		table.deleteRow("1");
 		
 		it = table.select("a1=1").iterator();
 		
@@ -233,7 +233,7 @@ public class UserTableTest {
 		assertTrue(it.hasNext()==true);
 		assertTrue(it.next().getKey().equals("1"));
 
-		table.delete("1");
+		table.deleteRow("1");
 
 
 		table.close();
@@ -276,9 +276,9 @@ public class UserTableTest {
 		assertTrue(it.hasNext()==false);
 		assertTrue(keys.contains("1") && keys.contains("3"));
 		
-		table.delete("1");
-		table.delete("2");
-		table.delete("3");
+		table.deleteRow("1");
+		table.deleteRow("2");
+		table.deleteRow("3");
 
 		table.close();
 	}
