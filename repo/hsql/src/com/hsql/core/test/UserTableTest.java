@@ -23,12 +23,12 @@ public class UserTableTest {
 	static String tableName = "unitTestTable";
 
 	@BeforeClass
-	static public void init() throws IOException {
+	static public void init() throws Exception {
 		admin = new AdminUtil();
 		if (admin.isTableValid(tableName)) {
 			admin.deleteTable(tableName);
 		}
-		admin.createTable(tableName, new String[] { "a1", "a2", "a3" });
+		admin.createTable(tableName, new String[] { "f1:a1", "f1:a2", "f1:a3" });
 	}
 
 	@AfterClass

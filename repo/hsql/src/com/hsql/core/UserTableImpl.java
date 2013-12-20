@@ -21,390 +21,405 @@ import org.apache.hadoop.hbase.client.Scan;
 import com.hsql.core.UserTableImpl.RowIterable.RowIterator;
 
 /**
-*
-*
-* This class is not thread-safe.
-*/
+ * 
+ * 
+ * This class is not thread-safe.
+ */
 class UserTableImpl implements UserTable {
-        public final static byte[] userColumnFamily = "f1".getBytes();
-        public final static byte[] indexColumnFamily = "f1".getBytes();
-        public final static byte[] indexQualifier = "primaryKey".getBytes();
+	public byte[] userColumnFamily;
+	public final static byte[] indexColumnFamily = "f1".getBytes();
+	public final static byte[] indexQualifier = "primaryKey".getBytes();
 
-        private HTable userHTable = null;
-        private HTable indexHTable = null;
-        private TreeSet<String> indexNames = new TreeSet<String>();
-        private String tableName;
+	private HTable userHTable = null;
+	private HTable indexHTable = null;
+	private TreeSet<String> indexNames = new TreeSet<String>();
+	private String tableName;
 
-        public UserTableImpl(String tableName) {
-                this.tableName = tableName;
-        }
+	public UserTableImpl(String tableName) {
+		this.tableName = tableName;
+	}
 
-        /**
-         * open connection to both user table and index table
-         *
-         * @throws IOException
-         */
-        @Override
-        public void open() throws Exception {
-                AdminUtil adminUtil = new AdminUtil();
+	/**
+	 * open connection to both user table and index table
+	 * 
+	 * @throws IOException
+	 */
+	@Override
+	public void open() throws Exception {
+		AdminUtil adminUtil = new AdminUtil();
 
-                String[] cols = adminUtil.getIndexCols(tableName);
+		String[] cols = adminUtil.getIndexCols(tableName);
 
-                if (cols != null) {
-                        for (String s : cols) {
-                                indexNames.add(s);
-                        }
-                } else {
-                        throw new Exception("cannot get index information for table "
-                                        + tableName);
-                }
+		if (cols != null) {
+			for (String s : cols) {
+				String[] ss = s.split(":");
+				if (userColumnFamily == null) {
+					userColumnFamily = ss[0].getBytes();
+				} else {
+					if (!ss[0].equals(new String(userColumnFamily))) {
+						throw new Exception("ERROR, the column " + s
+								+ " is not in family " + userColumnFamily);
+					}
+				}
+				indexNames.add(ss[1]);
+			}
+		} else {
+			throw new Exception("cannot get index information for table "
+					+ tableName);
+		}
 
-                userHTable = new HTable(tableName);
-                indexHTable = new HTable(tableName + "Index");
+		userHTable = new HTable(tableName);
+		indexHTable = new HTable(tableName + ".Index");
 
-        }
+	}
 
-        /**
-         * close both user table and index table
-         */
-        @Override
-        public void close() {
-                try {
-                        userHTable.close();
+	/**
+	 * close both user table and index table
+	 */
+	@Override
+	public void close() {
+		try {
+			userHTable.close();
 
-                } catch (IOException e) {
+		} catch (IOException e) {
 
-                }
-                try {
-                        indexHTable.close();
-                } catch (IOException e) {
+		}
+		try {
+			indexHTable.close();
+		} catch (IOException e) {
 
-                }
-        }
+		}
+	}
 
-        @Override
-        public void delete(String pk) throws Exception {
-                Get get = new Get(pk.getBytes());
-                Result rs = userHTable.get(get);
-                NavigableMap<byte[], byte[]> kv = rs.getNoVersionMap().values()
-                                .iterator().next();
-                Map<String, String> indexes = new HashMap<String, String>();
-                for (byte[] col : kv.keySet()) {
-                        if (indexNames.contains(new String(col))) {
-                                indexes.put(new String(col), new String(kv.get(col)));
-                        }
-                }
-                List<String> indexKeys = IndexCreator.getIndexKeys(indexes, pk, indexNames);
+	@Override
+	public void delete(String pk) throws Exception {
+		Get get = new Get(pk.getBytes());
+		Result rs = userHTable.get(get);
+		NavigableMap<byte[], byte[]> kv = rs.getNoVersionMap().values()
+				.iterator().next();
+		Map<String, String> indexes = new HashMap<String, String>();
+		for (byte[] col : kv.keySet()) {
+			if (indexNames.contains(new String(col))) {
+				indexes.put(new String(col), new String(kv.get(col)));
+			}
+		}
+		List<String> indexKeys = IndexCreator.getIndexKeys(indexes, pk,
+				indexNames);
 
-                Delete delete = new Delete(pk.getBytes());
-                userHTable.delete(delete);
+		Delete delete = new Delete(pk.getBytes());
+		userHTable.delete(delete);
 
-                List<Delete> deletes = new ArrayList<Delete>();
-                for (String k : indexKeys) {
-                        delete = new Delete(k.getBytes());
-                        deletes.add(delete);
-                }
-                indexHTable.delete(deletes);
+		List<Delete> deletes = new ArrayList<Delete>();
+		for (String k : indexKeys) {
+			delete = new Delete(k.getBytes());
+			deletes.add(delete);
+		}
+		indexHTable.delete(deletes);
 
-        }
+	}
 
-        /**
-         * insert a row into user table; also build index in the index table all
-         * index columns must have values if a row with the same primary key already
-         * exists, the previous indexes will be deleted
-         *
-         * @param key
-         * is unique in a table
-         * @param allCols
-         * contain all key-value pairs of columns. All index columns must
-         * be included.
-         * @throws Exception
-         */
-        
-        private void insert(String key, Map<String, String> allCols)
-                        throws Exception {
+	/**
+	 * insert a row into user table; also build index in the index table all
+	 * index columns must have values if a row with the same primary key already
+	 * exists, the previous indexes will be deleted
+	 * 
+	 * @param key
+	 *            is unique in a table
+	 * @param allCols
+	 *            contain all key-value pairs of columns. All index columns must
+	 *            be included.
+	 * @throws Exception
+	 */
 
-                Get get = new Get(key.getBytes());
-                Result rs = userHTable.get(get);
-                if (rs != null && rs.getRow() != null
-                                && new String(rs.getRow()).equals(key)) {
-                        delete(key);
-                }
+	private void insert(String key, Map<String, String> allCols)
+			throws Exception {
 
-                Map<String, String> indexCol = new HashMap<String, String>();
-                Map<String, String> noneIndexCol = new HashMap<String, String>();
+		Get get = new Get(key.getBytes());
+		Result rs = userHTable.get(get);
+		if (rs != null && rs.getRow() != null
+				&& new String(rs.getRow()).equals(key)) {
+			delete(key);
+		}
 
-                for (String k : allCols.keySet()) {
-                        if (indexNames.contains(k)) {
-                                indexCol.put(k, allCols.get(k));
-                        } else {
-                                noneIndexCol.put(k, allCols.get(k));
-                        }
-                }
+		Map<String, String> indexCol = new HashMap<String, String>();
+		Map<String, String> noneIndexCol = new HashMap<String, String>();
 
-                if (indexCol.size() < indexNames.size()) {
-                        throw new Exception("All index columns must have values");
-                }
+		for (String k : allCols.keySet()) {
+			if (indexNames.contains(k)) {
+				indexCol.put(k, allCols.get(k));
+			} else {
+				noneIndexCol.put(k, allCols.get(k));
+			}
+		}
 
-                Put put = new Put(key.getBytes());
-                List<Put> puts = new ArrayList<Put>();
+		if (indexCol.size() < indexNames.size()) {
+			throw new Exception("All index columns must have values");
+		}
 
-                for (Entry<String, String> e : indexCol.entrySet()) {
-                        put.add(userColumnFamily, e.getKey().getBytes(), e.getValue()
-                                        .getBytes());
-                        puts.add(put);
-                }
-                for (Entry<String, String> e : noneIndexCol.entrySet()) {
-                        put.add(userColumnFamily, e.getKey().getBytes(), e.getValue()
-                                        .getBytes());
-                        puts.add(put);
-                }
+		Put put = new Put(key.getBytes());
+		List<Put> puts = new ArrayList<Put>();
 
-                userHTable.put(puts);
+		for (Entry<String, String> e : indexCol.entrySet()) {
+			put.add(userColumnFamily, e.getKey().getBytes(), e.getValue()
+					.getBytes());
+			puts.add(put);
+		}
+		for (Entry<String, String> e : noneIndexCol.entrySet()) {
 
-                List<String> indexes = IndexCreator.getIndexKeys(indexCol, key, indexNames);
+			put.add(userColumnFamily, e.getKey().getBytes(), e.getValue()
+					.getBytes());
+			puts.add(put);
+		}
 
-                puts.clear();
-                for (String index : indexes) {
-                        put = new Put((index).getBytes());
-                        put.add(indexColumnFamily, indexQualifier, key.getBytes());
-                        puts.add(put);
-                }
-                indexHTable.put(puts);
+		userHTable.put(puts);
 
-        }
+		List<String> indexes = IndexCreator.getIndexKeys(indexCol, key,
+				indexNames);
 
-        class RowIterable implements Iterable<UserRow> {
-                Map<String, String> indexes;
-                ResultScanner rs;
-                private Iterator<Result> it;
+		puts.clear();
+		for (String index : indexes) {
+			put = new Put((index).getBytes());
+			put.add(indexColumnFamily, indexQualifier, key.getBytes());
+			puts.add(put);
+		}
+		indexHTable.put(puts);
 
-                public RowIterable(Map<String, String> indexes) throws Exception {
-                        if (!indexNames.containsAll(indexes.keySet())) {
-                                throw new Exception("searched columns are not indexed");
-                        }
+	}
 
-                        this.indexes = indexes;
-                }
+	class RowIterable implements Iterable<UserRow> {
+		Map<String, String> indexes;
+		ResultScanner rs;
+		private Iterator<Result> it;
 
-                @Override
-                public Iterator<UserRow> iterator() {
-                        try {
-                                rs = getScanner(indexes);
-                                it = rs.iterator();
-                        } catch (Exception e) {
-                                // TODO Auto-generated catch block
-                                e.printStackTrace();
-                                return null;
-                        }
+		public RowIterable(Map<String, String> indexes) throws Exception {
+			if (!indexNames.containsAll(indexes.keySet())) {
+				throw new Exception("searched columns are not indexed");
+			}
 
-                        return new RowIterator();
-                }
+			this.indexes = indexes;
+		}
 
-                class RowIterator implements Iterator<UserRow> {
+		@Override
+		public Iterator<UserRow> iterator() {
+			try {
+				rs = getScanner(indexes);
+				it = rs.iterator();
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				return null;
+			}
 
-                        @Override
-                        public boolean hasNext() {
-                                boolean res=it.hasNext() == false;
-                                if (res==false) {
-                                        rs.close();
-                                }
-                                return it.hasNext();
-                        }
+			return new RowIterator();
+		}
 
-                        @Override
-                        public UserRow next() {
-                                Result rr = it.next();
-                                try {
-                                        return getRow(rr);
-                                } catch (IOException e) {
-                                        return null;
-                                }
-                        }
+		class RowIterator implements Iterator<UserRow> {
 
-                        @Override
-                        public void remove() {
+			@Override
+			public boolean hasNext() {
+				boolean res = it.hasNext() == false;
+				if (res == false) {
+					rs.close();
+				}
+				return it.hasNext();
+			}
 
-                        }
-                }
-        }
+			@Override
+			public UserRow next() {
+				Result rr = it.next();
+				try {
+					return getRow(rr);
+				} catch (IOException e) {
+					return null;
+				}
+			}
 
-        
-        private Iterable<UserRow> select(Map<String, String> indexes)
-                        throws Exception {
-                return new RowIterable(indexes);
-        }
+			@Override
+			public void remove() {
 
-        private ResultScanner getScanner(Map<String, String> indexes)
-                        throws Exception {
-                String searchKey=IndexCreator.getSearchKey(indexes, indexNames);
-                Scan scan = new Scan();
-                byte[] startRow = searchKey.getBytes();
-                scan.setStartRow(startRow);
-                byte[] stopRow = searchKey.getBytes();
-                stopRow[stopRow.length - 1]++;
-                scan.setStopRow(stopRow);
-                scan.addColumn(indexColumnFamily, indexQualifier);
-                ResultScanner rs = indexHTable.getScanner(scan);
-                return rs;
-        }
+			}
+		}
+	}
 
-        private UserRow getRow(Result rr) throws IOException {
-                String primaryKey = new String(rr.getValue(indexColumnFamily,
-                                indexQualifier));
-                Get get = new Get(primaryKey.getBytes());
-                Result getRes = userHTable.get(get);
-                NavigableMap<byte[], NavigableMap<byte[], byte[]>> resMap = getRes
-                                .getNoVersionMap();
-                NavigableMap<byte[], byte[]> fMap = resMap.get(userColumnFamily);
+	private Iterable<UserRow> select(Map<String, String> indexes)
+			throws Exception {
+		return new RowIterable(indexes);
+	}
 
-                Map<String, String> indexedCol = new HashMap<String, String>();
-                Map<String, String> unIndexedCol = new HashMap<String, String>();
-                for (byte[] kk : fMap.keySet()) {
-                        String col = new String(kk);
-                        String v = new String(fMap.get(kk));
-                        if (indexNames.contains(col)) {
-                                indexedCol.put(col, v);
-                        } else {
-                                unIndexedCol.put(col, v);
-                        }
-                }
+	private ResultScanner getScanner(Map<String, String> indexes)
+			throws Exception {
+		String searchKey = IndexCreator.getSearchKey(indexes, indexNames);
+		Scan scan = new Scan();
+		byte[] startRow = searchKey.getBytes();
+		scan.setStartRow(startRow);
+		byte[] stopRow = searchKey.getBytes();
+		stopRow[stopRow.length - 1]++;
+		scan.setStopRow(stopRow);
+		scan.addColumn(indexColumnFamily, indexQualifier);
+		ResultScanner rs = indexHTable.getScanner(scan);
+		return rs;
+	}
 
-                UserRow row = new UserRow();
-                row.setIndexedCols(indexedCol);
-                row.setNonIndexedCols(unIndexedCol);
-                row.setKey(primaryKey);
-                return row;
-        }
-        
-        class ORIterable implements Iterable<UserRow>{
+	private UserRow getRow(Result rr) throws IOException {
+		String primaryKey = new String(rr.getValue(indexColumnFamily,
+				indexQualifier));
+		Get get = new Get(primaryKey.getBytes());
+		Result getRes = userHTable.get(get);
+		NavigableMap<byte[], NavigableMap<byte[], byte[]>> resMap = getRes
+				.getNoVersionMap();
+		NavigableMap<byte[], byte[]> fMap = resMap.get(userColumnFamily);
 
-                private List<Map<String, String>> indexBlocks;
-                public ORIterable(List<Map<String, String>> indexBlocks){
-                        this.indexBlocks=indexBlocks;
-                }
-                @Override
-                public Iterator<UserRow> iterator() {
+		Map<String, String> indexedCol = new HashMap<String, String>();
+		Map<String, String> unIndexedCol = new HashMap<String, String>();
+		for (byte[] kk : fMap.keySet()) {
+			String col = new String(kk);
+			String v = new String(fMap.get(kk));
+			if (indexNames.contains(col)) {
+				indexedCol.put(col, v);
+			} else {
+				unIndexedCol.put(col, v);
+			}
+		}
 
-                        try {
-                                return new ORIterator();
-                        } catch (Exception e) {
-                                throw new RuntimeException(e);
-                        }
-                }
-                class ORIterator implements Iterator<UserRow> {
-                        Iterator<UserRow> currentRowIterator;
-                        List<Map<String, String>> usedIndexes=new ArrayList<Map<String,String>>();
-                        private UserRow row4next;
-                        private int currentIndexSeq;
-                        
-                        public ORIterator() throws Exception{
-                                currentRowIterator=new RowIterable(indexBlocks.get(0)).iterator();
-                                currentIndexSeq=0;
-                        }
-                        
-                        private boolean alreadyGet(UserRow row){
-                                for(Map<String, String> indexes: usedIndexes){
-                                        boolean allMatch=true;
-                                        for(Entry<String, String> e: indexes.entrySet()){
-                                                if(!row.getIndexedCols().get(e.getKey()).equals(e.getValue())){
-                                                        allMatch=false;
-                                                }
-                                        }
-                                        if(allMatch==true){
-                                                return true;
-                                        }
-                                }
-                                return false;
-                        }
+		UserRow row = new UserRow();
+		row.setIndexedCols(indexedCol);
+		row.setNonIndexedCols(unIndexedCol);
+		row.setKey(primaryKey);
+		return row;
+	}
 
-                        @Override
-                        public boolean hasNext() {
-                                while(currentRowIterator.hasNext()){
-                                        row4next=currentRowIterator.next();
-                                        if(alreadyGet(row4next)){
-                                                continue;
-                                        }else{
-                                                return true;
-                                        }
-                                }
-                                usedIndexes.add(indexBlocks.get(currentIndexSeq));
-                                currentIndexSeq++;
-                                
-                                if(currentIndexSeq>=indexBlocks.size()){
-                                        row4next=null;
-                                        return false;
-                                }else{
-                                        try {
-                                                currentRowIterator=new RowIterable(indexBlocks.get(currentIndexSeq)).iterator();
-                                        } catch (Exception e) {
-                                                throw new RuntimeException(e);
-                                        }
-                                        return hasNext();
-                                }                                
-                        }
+	class ORIterable implements Iterable<UserRow> {
 
-                        @Override
-                        public UserRow next() {
-                                return row4next;
-                                
+		private List<Map<String, String>> indexBlocks;
 
-                        }
+		public ORIterable(List<Map<String, String>> indexBlocks) {
+			this.indexBlocks = indexBlocks;
+		}
 
-                        @Override
-                        public void remove() {
+		@Override
+		public Iterator<UserRow> iterator() {
 
-                                
-                        }
-                        
-                }
-        }
+			try {
+				return new ORIterator();
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		}
 
-        private Iterable<UserRow> select(List<Map<String, String>> indexBlocks)
-                        throws Exception {
+		class ORIterator implements Iterator<UserRow> {
+			Iterator<UserRow> currentRowIterator;
+			List<Map<String, String>> usedIndexes = new ArrayList<Map<String, String>>();
+			private UserRow row4next;
+			private int currentIndexSeq;
 
-                return new ORIterable(indexBlocks);
-        }
+			public ORIterator() throws Exception {
+				currentRowIterator = new RowIterable(indexBlocks.get(0))
+						.iterator();
+				currentIndexSeq = 0;
+			}
 
-        
-        List<Map<String, String>> parse(String command) throws Exception{
-                try{
-                List<Map<String, String>> res=new ArrayList<Map<String, String>> ();
-                String [] andCommands=command.split("or");
-                for(String s:andCommands){
-                        Map<String, String> block=new HashMap<String, String>();
-                        String [] indexes=s.split("and");
-                        for(String index:indexes){
-                                String [] kv=index.split("=");
-                                block.put(kv[0].trim(), kv[1].trim());
-                        }
-                        res.add(block);
-                }
-                return res;
-                }catch(Exception e){
-                        throw new Exception("cannot parse command "+ command, e);
-                }
-        }
-        @Override
-        public Iterable<UserRow> select(String condition) throws Exception {
-                List<Map<String, String>> blocks=parse(condition);
-                for(Map<String, String> block:blocks){
-                        if(!indexNames.containsAll(block.keySet()))
-                                throw new Exception(condition+ "contains invalid index column");
-                }
-                return select(blocks);
-        }
+			private boolean alreadyGet(UserRow row) {
+				for (Map<String, String> indexes : usedIndexes) {
+					boolean allMatch = true;
+					for (Entry<String, String> e : indexes.entrySet()) {
+						if (!row.getIndexedCols().get(e.getKey())
+								.equals(e.getValue())) {
+							allMatch = false;
+						}
+					}
+					if (allMatch == true) {
+						return true;
+					}
+				}
+				return false;
+			}
 
-        @Override
-        public void insert(String key, String colValues) throws Exception {
-                Map<String, String > cols=new HashMap<String,String>();
-                String ss[]=colValues.split(" ");
-                for(String s:ss){
-                        String[] kv = s.split("=");
-                        cols.put(kv[0].trim(), kv[1].trim());
-                }
-                insert(key, cols);
-                
-        }
+			@Override
+			public boolean hasNext() {
+				while (currentRowIterator.hasNext()) {
+					row4next = currentRowIterator.next();
+					if (alreadyGet(row4next)) {
+						continue;
+					} else {
+						return true;
+					}
+				}
+				usedIndexes.add(indexBlocks.get(currentIndexSeq));
+				currentIndexSeq++;
+
+				if (currentIndexSeq >= indexBlocks.size()) {
+					row4next = null;
+					return false;
+				} else {
+					try {
+						currentRowIterator = new RowIterable(
+								indexBlocks.get(currentIndexSeq)).iterator();
+					} catch (Exception e) {
+						throw new RuntimeException(e);
+					}
+					return hasNext();
+				}
+			}
+
+			@Override
+			public UserRow next() {
+				return row4next;
+
+			}
+
+			@Override
+			public void remove() {
+
+			}
+
+		}
+	}
+
+	private Iterable<UserRow> select(List<Map<String, String>> indexBlocks)
+			throws Exception {
+
+		return new ORIterable(indexBlocks);
+	}
+
+	List<Map<String, String>> parse(String command) throws Exception {
+		try {
+			List<Map<String, String>> res = new ArrayList<Map<String, String>>();
+			String[] andCommands = command.split("or");
+			for (String s : andCommands) {
+				Map<String, String> block = new HashMap<String, String>();
+				String[] indexes = s.split("and");
+				for (String index : indexes) {
+					String[] kv = index.split("=");
+					block.put(kv[0].trim(), kv[1].trim());
+				}
+				res.add(block);
+			}
+			return res;
+		} catch (Exception e) {
+			throw new Exception("cannot parse command " + command, e);
+		}
+	}
+
+	@Override
+	public Iterable<UserRow> select(String condition) throws Exception {
+		List<Map<String, String>> blocks = parse(condition);
+		for (Map<String, String> block : blocks) {
+			if (!indexNames.containsAll(block.keySet()))
+				throw new Exception(condition + "contains invalid index column");
+		}
+		return select(blocks);
+	}
+
+	@Override
+	public void insert(String key, String colValues) throws Exception {
+		Map<String, String> cols = new HashMap<String, String>();
+		String ss[] = colValues.split(" ");
+		for (String s : ss) {
+			String[] kv = s.split("=");
+			cols.put(kv[0].trim(), kv[1].trim());
+		}
+		insert(key, cols);
+
+	}
 
 }

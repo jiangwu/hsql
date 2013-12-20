@@ -11,6 +11,7 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
+import org.junit.Test;
 
 public class AdminUtil {
 
@@ -44,7 +45,47 @@ public class AdminUtil {
 			return null;
 		}
 	}
+	
 
+
+	@Test
+	public void test() throws IOException{
+		createIndex("Credit.Trade.EOD.EM", new String[]{"MetaInfo:account","MetaInfo:id","MetaInfo:product","MetaInfo:region"} );
+	}
+	public void createIndex(String table, String[] cols) throws IOException{
+		Configuration conf = new Configuration();
+		HBaseAdmin admin = new HBaseAdmin(conf);
+
+		// if the indexMeta table is not created, create it first
+		if (!admin.isTableAvailable(indexMetaTable)) {
+			HTableDescriptor desc = new HTableDescriptor(indexMetaTable);
+			HColumnDescriptor cdesc = new HColumnDescriptor(family);
+			desc.addFamily(cdesc);
+			admin.createTable(desc);
+		}
+
+		// create index table
+		HTableDescriptor desc = new HTableDescriptor(table + ".Index");
+		HColumnDescriptor cdesc = new HColumnDescriptor(UserTableImpl.indexColumnFamily);
+		desc.addFamily(cdesc);
+		admin.createTable(desc);
+
+		admin.close();
+
+		// write metaTable for the index table
+
+		HTable indexTable = new HTable(indexMetaTable);
+		Put put = new Put(table.getBytes());
+		StringBuffer sb = new StringBuffer();
+		for (String c : cols) {
+			sb.append(c);
+			sb.append(",");
+		}
+		put.add(family, qualifier, sb.substring(0, sb.length() - 1).getBytes());
+		indexTable.put(put);
+
+		indexTable.close();	
+	}
 	/**
 	 * Create both a table and its index table
 	 * 
@@ -54,7 +95,16 @@ public class AdminUtil {
 	 *            columns of the table to be indexed
 	 * @throws IOException
 	 */
-	public void createTable(String table, String[] cols) throws IOException {
+	public void createTable(String table, String[] cols) throws Exception {
+		
+		byte[] userColumnFamily=cols[0].split(":")[0].getBytes();
+		for(int i=1;i<cols.length;i++){
+			String family=cols[i].split(":")[0];
+			if(!family.equals(new String(userColumnFamily))){
+				throw new Exception("Column "+cols[i]+" is not in the family "+userColumnFamily);
+			}
+		}
+		
 		Configuration conf = new Configuration();
 		HBaseAdmin admin = new HBaseAdmin(conf);
 
@@ -69,12 +119,12 @@ public class AdminUtil {
 		// create table
 		HTableDescriptor desc = new HTableDescriptor(table.getBytes());
 		HColumnDescriptor cdesc = new HColumnDescriptor(
-				UserTableImpl.userColumnFamily);
+				userColumnFamily);
 		desc.addFamily(cdesc);
 		admin.createTable(desc);
 
 		// create index table
-		desc = new HTableDescriptor(table + "Index");
+		desc = new HTableDescriptor(table + ".Index");
 		cdesc = new HColumnDescriptor(UserTableImpl.indexColumnFamily);
 		desc.addFamily(cdesc);
 		admin.createTable(desc);
@@ -113,9 +163,9 @@ public class AdminUtil {
 			admin.disableTable(tableName);
 			admin.deleteTable(tableName);
 		}
-		if (admin.isTableAvailable(tableName + "Index")) {
-			admin.disableTable(tableName + "Index");
-			admin.deleteTable(tableName + "Index");
+		if (admin.isTableAvailable(tableName + ".Index")) {
+			admin.disableTable(tableName + ".Index");
+			admin.deleteTable(tableName + ".Index");
 		}
 
 		admin.close();
@@ -123,7 +173,7 @@ public class AdminUtil {
 	public boolean isTableValid(String tableName) throws IOException{
 		HBaseAdmin admin=new HBaseAdmin(new Configuration());
 		boolean res=true;
-		if(!admin.isTableAvailable(tableName) && !admin.isTableAvailable(tableName+"Index")){
+		if(!admin.isTableAvailable(tableName) && !admin.isTableAvailable(tableName+".Index")){
 			res= false;
 		}else{
 			res= true;

@@ -6,7 +6,7 @@ import com.hsql.core.AdminUtil;
 
 public class Admin {
 
-	public static void main(String[] args){
+	public static void main(String[] args) {
 		if(args.length<2 ){
 			System.out.println("Usage:");
 			System.out.println(" create tabelName [col1 col2 col3 ...]");
@@ -29,7 +29,7 @@ public class Admin {
 
 			try {
 				admin.createTable(tableName, col);
-			} catch (IOException e) {
+			} catch (Exception e) {
 				System.out.println("create table failed.");
 				e.printStackTrace();
 			}

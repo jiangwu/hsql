@@ -23,12 +23,12 @@ public class UseCaseTest {
 	static String tableName = "unitTestTable";
 
 	@BeforeClass
-	static public void init() throws IOException {
+	static public void init() throws Exception {
 		admin = new AdminUtil();
 		if (admin.isTableValid(tableName)) {
 			admin.deleteTable(tableName);
 		}
-		admin.createTable(tableName, new String[] { "name", "dept", "team" });
+		admin.createTable(tableName, new String[] { "Meta:name", "Meta:dept", "Meta:team" });
 	}
 
 	@AfterClass
