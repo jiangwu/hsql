@@ -202,7 +202,7 @@ public class IndexAdminImpl implements IndexAdmin{
 		HBaseAdmin admin = new HBaseAdmin(new Configuration());
 		boolean res = true;
 		if (!admin.isTableAvailable(tableName)
-				&& !admin.isTableAvailable(tableName + ".Index")) {
+				|| !admin.isTableAvailable(tableName + ".Index")) {
 			res = false;
 		} else {
 			res = true;
