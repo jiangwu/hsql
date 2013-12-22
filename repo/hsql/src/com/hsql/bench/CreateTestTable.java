@@ -3,7 +3,7 @@ package com.hsql.bench;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 
-import com.hsql.core.AdminUtil;
+import com.hsql.core.IndexAdminImpl;
 import com.hsql.core.UserTable;
 import com.hsql.core.UserTableFactory;
 
@@ -15,18 +15,18 @@ public class CreateTestTable {
 	 */
 	public static void create() throws Exception {
 		String tableName = TestSetting.tableName;
-		AdminUtil admin = new AdminUtil();
+		IndexAdminImpl admin = new IndexAdminImpl();
 
 		HBaseAdmin hbaseAdmin = new HBaseAdmin(new Configuration());
 		if (hbaseAdmin.isTableAvailable(tableName)) {
 
-			admin.deleteTable(tableName);
+			admin.deleteIndex(tableName);
 		}
 		hbaseAdmin.close();
 
 		String[] indexCol = TestSetting.indexCol;
 
-		admin.createTable(tableName, indexCol);
+		admin.buildIndex(tableName, indexCol);
 
 		UserTable table = UserTableFactory.getTable(tableName);
 		table.open();

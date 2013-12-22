@@ -9,31 +9,57 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.hsql.core.AdminUtil;
+import com.hsql.core.IndexAdminImpl;
 import com.hsql.core.UserRow;
 import com.hsql.core.UserTable;
 import com.hsql.core.UserTableFactory;
 
 public class UserTableTest {
-	static AdminUtil admin = null;
+	static IndexAdminImpl admin = null;
+	static HBaseAdmin hadmin=null;
 	static String tableName = "unitTestTable";
+	static String colFamily="Meta";
 
 	@BeforeClass
 	static public void init() throws Exception {
-		admin = new AdminUtil();
-		if (admin.isTableValid(tableName)) {
-			admin.deleteTable(tableName);
+		HBaseAdmin hadmin=new HBaseAdmin(new Configuration());
+		if(!hadmin.isTableAvailable(tableName)){
+			HTableDescriptor tdesc=new HTableDescriptor(tableName);
+			HColumnDescriptor cdesc=new HColumnDescriptor(colFamily);
+			tdesc.addFamily(cdesc);
+			hadmin.createTable(tdesc);
+		}else{
+			HTableDescriptor tdesc=hadmin.getTableDescriptor(tableName.getBytes());
+			hadmin.disableTable(tableName);
+			hadmin.deleteTable(tableName);
+			hadmin.createTable(tdesc);
 		}
-		admin.createTable(tableName, new String[] { "f1:a1", "f1:a2", "f1:a3" });
+		hadmin.close();
+		admin = new IndexAdminImpl();
+		
+		
+		if (admin.isTableIndexed(tableName)) {
+			admin.deleteIndex(tableName);
+		}
+		admin.buildIndex(tableName, new String[] { colFamily+":a1", colFamily+":a2", colFamily+":a3" });
 	}
 
 	@AfterClass
 	static public void cleanup() throws IOException {
-		admin.deleteTable(tableName);
+		admin.deleteIndex(tableName);
+		
+		hadmin=new HBaseAdmin(new Configuration());
+		hadmin.disableTable(tableName);
+		hadmin.deleteTable(tableName);
+		hadmin.close();
 
 	}
 	

@@ -54,10 +54,12 @@ class UserTableImpl implements UserTable {
 	 */
 	@Override
 	public void open() throws Exception {
-		AdminUtil adminUtil = new AdminUtil();
-
+		IndexAdminImpl adminUtil = new IndexAdminImpl();
+		adminUtil.open();
+		
 		String[] cols = adminUtil.getIndexCols(tableName);
 
+		adminUtil.close();
 		if (cols != null) {
 			for (String s : cols) {
 				String[] ss = s.split(":");
@@ -77,7 +79,7 @@ class UserTableImpl implements UserTable {
 		}
 
 		userHTable = new HTable(tableName);
-		indexHTable = new HTable(tableName + ".Index");
+		indexHTable = new HTable(indexTableName);
 
 	}
 
@@ -427,47 +429,8 @@ class UserTableImpl implements UserTable {
 	}
 	
 	
-	@Override
-	public void reBuildIndex() throws Exception{
-		
-		HBaseAdmin admin=new HBaseAdmin(new Configuration());
-		HTableDescriptor desc = indexHTable.getTableDescriptor();
-		admin.disableTable(indexTableName);
-		admin.deleteTable(indexTableName);
-		admin.createTable(desc);
-		admin.close();
-		
-		Scan scan = new Scan();
-		for (String q : indexNames) {
-			scan.addColumn(userColumnFamily, q.getBytes());
-		}
 
-		
-		ResultScanner rs=userHTable.getScanner(scan);
-		Map<String, String> indexCols=new HashMap<String,String>();
-		int inCount=0;
-		int outCount=0;
-		for(Result res:rs){
-			inCount++;
-			indexCols.clear();
-			String key=new String(res.getRow());
-			Collection<NavigableMap<byte[],byte[]>> maps = res.getNoVersionMap().values();
-			for(NavigableMap<byte[],byte[]> map:maps){
-				for(Entry<byte[],byte[]> e : map.entrySet()){
-					String qualifier=new String(e.getKey());
-					String value=new String(e.getValue());
-					indexCols.put(qualifier, value);
-					outCount++;
-				}
-			}
-			insertIndex(key, indexCols);
-		}
-		rs.close();
-		
-		System.out.println("======in count "+inCount);
-		System.out.println("======out count "+outCount);
-		
-	}
+
 
 	@Override
 	public Iterable<UserRow> select(String condition) throws Exception {
