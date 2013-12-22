@@ -44,7 +44,7 @@ public class UserTableTest {
 		}
 		hadmin.close();
 		admin = new IndexAdminImpl();
-		
+		admin.open();
 		
 		if (admin.isTableIndexed(tableName)) {
 			admin.deleteIndex(tableName);
@@ -60,6 +60,8 @@ public class UserTableTest {
 		hadmin.disableTable(tableName);
 		hadmin.deleteTable(tableName);
 		hadmin.close();
+		
+		admin.close();
 
 	}
 	

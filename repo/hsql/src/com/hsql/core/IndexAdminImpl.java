@@ -48,7 +48,7 @@ public class IndexAdminImpl implements IndexAdmin{
 		get.addColumn(Constants.metaColFamily, Constants.metaColqualifier);
 
 		Result rs = indexTable.get(get);
-		indexTable.close();
+
 
 		if (rs != null) {
 			byte[] resB = rs.getValue(Constants.metaColFamily,
@@ -164,7 +164,6 @@ public class IndexAdminImpl implements IndexAdmin{
 
 		// write metaTable for the index table
 
-		HTable indexTable = new HTable(Constants.metaTable);
 		Put put = new Put(table.getBytes());
 		StringBuffer sb = new StringBuffer();
 		for (String c : cols) {
@@ -174,7 +173,6 @@ public class IndexAdminImpl implements IndexAdmin{
 		put.add(Constants.metaColFamily, Constants.metaColqualifier, sb
 				.substring(0, sb.length() - 1).getBytes());
 		indexTable.put(put);
-		indexTable.close();
 
 		computeIndex(table, userTableIndexFamily, cols);
 
@@ -187,7 +185,6 @@ public class IndexAdminImpl implements IndexAdmin{
 		delete.deleteFamily(Constants.userIndexColFamily);
 
 		indexTable.delete(delete);
-		indexTable.close();
 
 		Configuration conf = new Configuration();
 		HBaseAdmin admin = new HBaseAdmin(conf);

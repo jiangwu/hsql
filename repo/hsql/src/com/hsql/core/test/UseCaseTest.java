@@ -44,7 +44,7 @@ public class UseCaseTest {
 		}
 		hadmin.close();
 		admin = new IndexAdminImpl();
-		
+		admin.open();
 		
 		if (admin.isTableIndexed(tableName)) {
 			admin.deleteIndex(tableName);
