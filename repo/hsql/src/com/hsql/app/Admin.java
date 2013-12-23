@@ -38,19 +38,19 @@ public class Admin {
 			String[] args = input.split(" ");
 
 
-			if(args[0].equals("help")){
+			if(input.startsWith("help")){
 				printHelp();
 			}else if(args[0].equals("quit")){
 				br.close();
 				admin.close();
 				break;
-			}else if(args[0].equals("list")){
+			}else if(input.startsWith("list")){
 				Map<String, String> indexes=admin.getIndexedTables();
 				System.out.println("Table Name\t\tIndexes");
 				for(Entry<String,String> e: indexes.entrySet()){
 					System.out.println(e.getKey()+"\t\t"+e.getValue());
 				}
-			}else if (args[0].equals("build")) {
+			}else if (input.startsWith("build")) {
 				String tableName = args[1];
 				String[] col = new String[args.length - 2];
 				for (int i = 2; i < args.length; i++) {
@@ -59,7 +59,7 @@ public class Admin {
 
 				try {
 					admin.buildIndex(tableName, col);
-					System.out.println("Table " + tableName + "indexes are created.");
+					System.out.println("Table " + tableName + " indexes are created.");
 				} catch (Exception e) {
 					System.out.println("create table index failed.");
 					e.printStackTrace();
@@ -69,7 +69,7 @@ public class Admin {
 				String tableName = args[1];
 				try {
 					admin.deleteIndex(tableName);
-					System.out.println("Table " + tableName + "indexes are deleted.");
+					System.out.println("Table " + tableName + " indexes are deleted.");
 				} catch (IOException e) {
 					System.out.println("delete table failed");
 					e.printStackTrace();

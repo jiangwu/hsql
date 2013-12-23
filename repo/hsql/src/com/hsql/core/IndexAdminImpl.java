@@ -174,7 +174,11 @@ public class IndexAdminImpl implements IndexAdmin{
 				.substring(0, sb.length() - 1).getBytes());
 		indexTable.put(put);
 
-		computeIndex(table, userTableIndexFamily, cols);
+		String[] indexes=new String[cols.length];
+		for(int i=0;i<cols.length;i++){
+			indexes[i]=cols[i].split(":")[1].trim();
+		}
+		computeIndex(table, userTableIndexFamily, indexes);
 
 	}
 

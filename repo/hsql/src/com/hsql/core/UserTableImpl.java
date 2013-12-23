@@ -245,11 +245,11 @@ class UserTableImpl implements UserTable {
 
 			@Override
 			public boolean hasNext() {
-				boolean res = it.hasNext() == false;
+				boolean res = it.hasNext();
 				if (res == false) {
 					rs.close();
 				}
-				return it.hasNext();
+				return res;
 			}
 
 			@Override

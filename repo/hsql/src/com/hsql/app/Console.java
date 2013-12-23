@@ -61,14 +61,18 @@ public class Console {
 					String[] ss = input.split(tableName);
 
 					try {
+						long t1=System.currentTimeMillis();
 
 						Iterable<UserRow> res = getTable(tableName).select(
 								ss[1]);
 
+						int count=0;
 						for (UserRow row : res) {
-
+							count ++;
 							Utils.printRow(row);
+							System.out.println();;
 						}
+						System.out.println("\nGet "+ count+" rows in "+(System.currentTimeMillis()-t1)+ " ms");
 
 					} catch (Exception e) {
 						// TODO Auto-generated catch block
