@@ -6,6 +6,8 @@
 	<property name="lib.dir" location="lib" />
 	<property name="build.dir" location="bin" />
 	<property name="dist.dir" location="dist" />
+	<property name="conf.dir" location="conf" />
+	<property name="scripts.dir" location="scripts" />
 
 
 	<path id="build.classpath">
@@ -25,10 +27,11 @@
 		<delete dir="${dist.dir}" />
 		<mkdir dir="${build.dir}" />
 		<mkdir dir="${dist.dir}" />
-		<javac srcdir="${src.dir}" destdir="${build.dir}" classpathref="build.classpath" debug="true"/>
-		<jar destfile="${dist.dir}\hsql.jar" basedir="${build.dir}">
-
+		<javac srcdir="${src.dir}" destdir="${build.dir}" classpathref="build.classpath" debug="true" />
+		<jar destfile="${dist.dir}\hsql.jar">
+			<fileset dir="." excludes="${src.dir}"/>
 		</jar>
+
 	</target>
 
 
