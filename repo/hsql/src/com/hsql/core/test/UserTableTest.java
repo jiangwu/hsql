@@ -26,7 +26,7 @@ public class UserTableTest {
 	static IndexAdminImpl admin = null;
 	static HBaseAdmin hadmin=null;
 	static String tableName = "unitTestTable";
-	static String colFamily="Meta";
+	static String colFamily="f1";
 
 	@BeforeClass
 	static public void init() throws Exception {
@@ -71,20 +71,20 @@ public class UserTableTest {
 		UserTable table = UserTableFactory.getTable(tableName);
 		table.open();
 
-		table.insert("1", "a1=1 a2=2 a3=3 a4=4 a5=5 a6=6");
-		table.insert("2", "a1=123 a2=2 a3=3 a4=4 a5=5 a6=6");
+		table.insert("1", "f1:a1=1 f1:a2=2 f1:a3=3 f1:a4=4 f1:a5=5 f1:a6=6");
+		table.insert("2", "f1:a1=123 f1:a2=2 f1:a3=3 f1:a4=4 f1:a5=5 f1:a6=6");
 
-		Iterator<UserRow> it = table.select("a1=1").iterator();
+		Iterator<UserRow> it = table.select("f1:a1=1").iterator();
 		assertTrue(it.hasNext());
 		assertTrue(it.next().getKey().equals("1"));
 		assertTrue(it.hasNext()==false);
 		
-		it = table.select("a1=123").iterator();
+		it = table.select("f1:a1=123").iterator();
 		assertTrue(it.hasNext());
 		assertTrue(it.next().getKey().equals("2"));
 		assertTrue(it.hasNext()==false);
 		
-		it = table.select("a1=12").iterator();
+		it = table.select("f1:a1=12").iterator();
 		assertTrue(it.hasNext()==false);
 		
 		
@@ -99,25 +99,25 @@ public class UserTableTest {
 		UserTable table = UserTableFactory.getTable(tableName);
 		table.open();
 
-		table.insert("1", "a1=1 a2=2 a3=3 a4=4 a5=5 a6=6");
+		table.insert("1", "f1:a1=1 f1:a2=2 f1:a3=3 f1:a4=4 f1:a5=5 f1:a6=6");
 
-		Iterator<UserRow> it = table.select("a1=1").iterator();
+		Iterator<UserRow> it = table.select("f1:a1=1").iterator();
 		assertTrue(it.hasNext());
 		assertTrue(it.next().getKey().equals("1"));
 
-		it = table.select("a2=2").iterator();
+		it = table.select("f1:a2=2").iterator();
 		assertTrue(it.hasNext());
 		assertTrue(it.next().getKey().equals("1"));
 		
-		it = table.select("a3=3").iterator();
+		it = table.select("f1:a3=3").iterator();
 		assertTrue(it.hasNext());
 		assertTrue(it.next().getKey().equals("1"));
 
-		it = table.select("a1=1 and a3=3").iterator();
+		it = table.select("f1:a1=1 and f1:a3=3").iterator();
 		assertTrue(it.hasNext());
 		assertTrue(it.next().getKey().equals("1"));
 
-		it = table.select("a2=2 and a3=3").iterator();
+		it = table.select("f1:a2=2 and f1:a3=3").iterator();
 		assertTrue(it.hasNext());
 		assertTrue(it.next().getKey().equals("1"));
 
@@ -131,28 +131,28 @@ public class UserTableTest {
 		UserTable table = UserTableFactory.getTable(tableName);
 		table.open();
 
-		table.insert("1", "a1=1 a2=2 a3=3 a4=4 a5=5 a6=6");
+		table.insert("1", "f1:a1=1 f1:a2=2 f1:a3=3 f1:a4=4 f1:a5=5 f1:a6=6");
 
 
-		table.insert("2", "a1=a a2=b a3=c a4=d a5=e a6=f");
+		table.insert("2", "f1:a1=a f1:a2=b f1:a3=c f1:a4=d f1:a5=e f1:a6=f");
 		
-		Iterator<UserRow> it = table.select("a1=a").iterator();
+		Iterator<UserRow> it = table.select("f1:a1=a").iterator();
 		assertTrue(it.hasNext());
 		assertTrue(it.next().getKey().equals("2"));
 
-		it = table.select("a2=b").iterator();
+		it = table.select("f1:a2=b").iterator();
 		assertTrue(it.hasNext());
 		assertTrue(it.next().getKey().equals("2"));
 
-		it = table.select("a3=c").iterator();
+		it = table.select("f1:a3=c").iterator();
 		assertTrue(it.hasNext());
 		assertTrue(it.next().getKey().equals("2"));
 		
-		it = table.select("a1=a and a3=c").iterator();
+		it = table.select("f1:a1=a and f1:a3=c").iterator();
 		assertTrue(it.hasNext());
 		assertTrue(it.next().getKey().equals("2"));
 
-		it = table.select("a2=b and a3=c").iterator();
+		it = table.select("f1:a2=b and f1:a3=c").iterator();
 		assertTrue(it.hasNext());
 		assertTrue(it.next().getKey().equals("2"));
 
@@ -166,14 +166,14 @@ public class UserTableTest {
 		UserTable table = UserTableFactory.getTable(tableName);
 		table.open();
 
-		table.insert("1", "a1=1 a2=2 a3=3 a4=4 a5=5 a6=6");
+		table.insert("1", "f1:a1=1 f1:a2=2 f1:a3=3 f1:a4=4 f1:a5=5 f1:a6=6");
 
 
-		table.insert("2", "a1=a a2=2 a3=3 a4=d a5=e a6=f");
+		table.insert("2", "f1:a1=a f1:a2=2 f1:a3=3 f1:a4=d f1:a5=e f1:a6=f");
 
 
 
-		Iterator<UserRow> it = table.select("a2=2 and a3=3").iterator();
+		Iterator<UserRow> it = table.select("f1:a2=2 and f1:a3=3").iterator();
 		Set<String> keys = new HashSet<String>();
 		it.hasNext();
 		keys.add(it.next().getKey());
@@ -196,16 +196,16 @@ public class UserTableTest {
 		UserTable table = UserTableFactory.getTable(tableName);
 		table.open();
 
-		table.insert("1", "a1=1 a2=2 a3=3 a4=4 a5=5 a6=6");
+		table.insert("1", "f1:a1=1 f1:a2=2 f1:a3=3 f1:a4=4 f1:a5=5 f1:a6=6");
 
 
-		table.insert("2", "a1=a a2=b a3=3 a4=d a5=e a6=f");
+		table.insert("2", "f1:a1=a f1:a2=b f1:a3=3 f1:a4=d f1:a5=e f1:a6=f");
 		
 
-		table.insert("3", "a1=a a2=A a3=3 a4=d a5=e a6=f");
+		table.insert("3", "f1:a1=a f1:a2=A f1:a3=3 f1:a4=d f1:a5=e f1:a6=f");
 		
 
-		Iterator<UserRow> it = table.select("a2=2 or a2=b").iterator();
+		Iterator<UserRow> it = table.select("f1:a2=2 or f1:a2=b").iterator();
 		Set<String> keys = new HashSet<String>();
 		while (it.hasNext()) {
 			keys.add(it.next().getKey());
@@ -229,12 +229,12 @@ public class UserTableTest {
 		UserTable table = UserTableFactory.getTable(tableName);
 		table.open();
 
-		table.insert("1", "a1=1 a2=2 a3=3 a4=4 a5=5 a6=6");
+		table.insert("1", "f1:a1=1 f1:a2=2 f1:a3=3 f1:a4=4 f1:a5=5 f1:a6=6");
 
 		Map<String, String> indexes = new HashMap<String, String>();
-		indexes.put("a1", "1");
+		indexes.put("f1:a1", "1");
 		
-		Iterator<UserRow> it = table.select("a1=1").iterator();
+		Iterator<UserRow> it = table.select("f1:a1=1").iterator();
 		
 		assertTrue(it.hasNext());
 
@@ -242,7 +242,7 @@ public class UserTableTest {
 
 		table.deleteRow("1");
 		
-		it = table.select("a1=1").iterator();
+		it = table.select("f1:a1=1").iterator();
 		
 		assertTrue(it.hasNext() == false);
 		
@@ -255,9 +255,9 @@ public class UserTableTest {
 		UserTable table = UserTableFactory.getTable(tableName);
 		table.open();
 
-		table.insert("1", "a1=1 a2=2 a3=3 a4=4 a5=5 a6=6");
+		table.insert("1", "f1:a1=1 f1:a2=2 f1:a3=3 f1:a4=4 f1:a5=5 f1:a6=6");
 
-		Iterator<UserRow> it = table.select("a2=2").iterator();
+		Iterator<UserRow> it = table.select("f1:a2=2").iterator();
 		assertTrue(it.hasNext()==true);
 		assertTrue(it.next().getKey().equals("1"));
 
@@ -272,20 +272,20 @@ public class UserTableTest {
 		UserTable table = UserTableFactory.getTable(tableName);
 		table.open();
 
-		table.insert("1", "a1=1 a2=2 a3=3 a4=4 a5=5 a6=6");
+		table.insert("1", "f1:a1=1 f1:a2=2 f1:a3=3 f1:a4=4 f1:a5=5 f1:a6=6");
 
 
-		table.insert("2", "a1=a a2=b a3=3 a4=d a5=e a6=f");
+		table.insert("2", "f1:a1=a f1:a2=b f1:a3=3 f1:a4=d f1:a5=e f1:a6=f");
 		
 
-		table.insert("3", "a1=a a2=A a3=B a4=d a5=e a6=f");
+		table.insert("3", "f1:a1=a f1:a2=A f1:a3=B f1:a4=d f1:a5=e f1:a6=f");
 		
-		Iterator<UserRow> it = table.select("a1=a and a2=b").iterator();
+		Iterator<UserRow> it = table.select("f1:a1=a and f1:a2=b").iterator();
 		assertTrue(it.hasNext());
 		assertTrue(it.next().getKey().equals("2"));
 		assertTrue(it.hasNext()==false);
 		
-		it = table.select("a1=a or a3=B").iterator();
+		it = table.select("f1:a1=a or f1:a3=B").iterator();
 		Set<String> keys=new HashSet<String>();
 		assertTrue(it.hasNext());
 		keys.add(it.next().getKey());
@@ -295,7 +295,7 @@ public class UserTableTest {
 		assertTrue(keys.contains("2") && keys.contains("3"));
 		
 		//get 1 3
-		it=table.select("a1=1 and a2=2 or a1=a and a2=x or a2=A and a3=B").iterator();
+		it=table.select("f1:a1=1 and f1:a2=2 or f1:a1=a and f1:a2=x or f1:a2=A and f1:a3=B").iterator();
 		keys.clear();
 		assertTrue(it.hasNext());
 		keys.add(it.next().getKey());
@@ -316,7 +316,7 @@ public class UserTableTest {
 		UserTable table = UserTableFactory.getTable(tableName);
 		table.open();
 
-		table.insert("1", "a2=2 a3=3 a4=4 a5=5 a6=6");
+		table.insert("1", "f1:a2=2 f1:a3=3 f1:a4=4 f1:a5=5 f1:a6=6");
 
 		table.close();
 	}
@@ -326,7 +326,7 @@ public class UserTableTest {
 		UserTable table = UserTableFactory.getTable(tableName);
 		table.open();
 		try {
-			table.select("a2=2 and a3=3 and a4=4");
+			table.select("f1:a2=2 and f1:a3=3 and f1:a4=4");
 		} catch (Exception e) {
 			table.close();
 			throw e;

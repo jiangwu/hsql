@@ -24,15 +24,17 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 
-public class IndexAdminImpl implements IndexAdmin{
-	HTable indexTable=null;
-	@Override 
-	public void open() throws IOException{
+public class IndexAdminImpl implements IndexAdmin {
+	HTable indexTable = null;
+
+	@Override
+	public void open() throws IOException {
 		indexTable = new HTable(Constants.metaTable);
 	}
+
 	@Override
-	public void close() throws IOException{
-		if(indexTable!=null)
+	public void close() throws IOException {
+		if (indexTable != null)
 			indexTable.close();
 	}
 
@@ -48,7 +50,6 @@ public class IndexAdminImpl implements IndexAdmin{
 		get.addColumn(Constants.metaColFamily, Constants.metaColqualifier);
 
 		Result rs = indexTable.get(get);
-
 
 		if (rs != null) {
 			byte[] resB = rs.getValue(Constants.metaColFamily,
@@ -84,12 +85,20 @@ public class IndexAdminImpl implements IndexAdmin{
 		indexHTable.put(puts);
 	}
 
-	private void computeIndex(String userTableName,
-			String userTableIndexFamily, String[] indexNames) throws Exception {
+	//for user table, given the indexed columns, create its indexes
+	/**
+	 * 
+	 * @param userTableName
+	 * @param indexNames f:q
+	 * @throws Exception
+	 */
+	private void computeIndex(String userTableName, String[] indexNames)
+			throws Exception {
 
 		Scan scan = new Scan();
-		for (String q : indexNames) {
-			scan.addColumn(userTableIndexFamily.getBytes(), q.getBytes());
+		for (String col : indexNames) {
+			String[] fq = col.split(":");
+			scan.addColumn(fq[0].trim().getBytes(), fq[1].trim().getBytes());
 		}
 
 		HTable userHTable = new HTable(userTableName);
@@ -103,12 +112,18 @@ public class IndexAdminImpl implements IndexAdmin{
 			String key = new String(res.getRow());
 			Collection<NavigableMap<byte[], byte[]>> maps = res
 					.getNoVersionMap().values();
-			for (NavigableMap<byte[], byte[]> map : maps) {
-				for (Entry<byte[], byte[]> e : map.entrySet()) {
-					String qualifier = new String(e.getKey());
-					String value = new String(e.getValue());
-					indexCols.put(qualifier, value);
 
+			NavigableMap<byte[], NavigableMap<byte[], byte[]>> all = res
+					.getNoVersionMap();
+			for (byte[] f : all.keySet()) {
+				String family=new String(f);
+				NavigableMap<byte[], byte[]> map=all.get(f); {
+					for (Entry<byte[], byte[]> e : map.entrySet()) {
+						String qualifier = new String(e.getKey());
+						String value = new String(e.getValue());
+						indexCols.put(family+":"+qualifier, value);
+
+					}
 				}
 			}
 			insertIndex(userIndexTable, key, indexCols, indexNames);
@@ -121,16 +136,20 @@ public class IndexAdminImpl implements IndexAdmin{
 
 	}
 
+
+	/**
+	 * cols f:q
+	 */
 	@Override
 	public void buildIndex(String table, String[] cols) throws Exception {
 
-		String userTableIndexFamily = cols[0].split(":")[0];
-
-		for (String col : cols) {
-			if (!col.split(":")[0].equals(userTableIndexFamily)) {
-				throw new Exception("Indexes are not in the same column family");
-			}
-		}
+//		String userTableIndexFamily = cols[0].split(":")[0];
+//
+//		for (String col : cols) {
+//			if (!col.split(":")[0].equals(userTableIndexFamily)) {
+//				throw new Exception("Indexes are not in the same column family");
+//			}
+//		}
 
 		Configuration conf = new Configuration();
 		HBaseAdmin admin = new HBaseAdmin(conf);
@@ -149,7 +168,7 @@ public class IndexAdminImpl implements IndexAdmin{
 		if (!admin.isTableAvailable(indexTableName)) {
 			HTableDescriptor desc = new HTableDescriptor(indexTableName);
 			HColumnDescriptor cdesc = new HColumnDescriptor(
-					UserTableImpl.indexColumnFamily);
+					Constants.metaColFamily);
 			desc.addFamily(cdesc);
 			admin.createTable(desc);
 		} else {
@@ -174,11 +193,11 @@ public class IndexAdminImpl implements IndexAdmin{
 				.substring(0, sb.length() - 1).getBytes());
 		indexTable.put(put);
 
-		String[] indexes=new String[cols.length];
-		for(int i=0;i<cols.length;i++){
-			indexes[i]=cols[i].split(":")[1].trim();
-		}
-		computeIndex(table, userTableIndexFamily, indexes);
+//		String[] indexes = new String[cols.length];
+//		for (int i = 0; i < cols.length; i++) {
+//			indexes[i] = cols[i].split(":")[1].trim();
+//		}
+		computeIndex(table, cols);
 
 	}
 
@@ -217,11 +236,14 @@ public class IndexAdminImpl implements IndexAdmin{
 
 	@Override
 	public Map<String, String> getIndexedTables() throws IOException {
-		Map<String,String> res=new TreeMap<String,String>();
-		ResultScanner rs = indexTable.getScanner(Constants.metaColFamily, Constants.metaColqualifier);
-		for(Result r: rs){
-			String table=new String(r.getRow());
-			String indexes=new String(r.getColumnLatest(Constants.metaColFamily, Constants.metaColqualifier).getValue());
+		Map<String, String> res = new TreeMap<String, String>();
+		ResultScanner rs = indexTable.getScanner(Constants.metaColFamily,
+				Constants.metaColqualifier);
+		for (Result r : rs) {
+			String table = new String(r.getRow());
+			String indexes = new String(r.getColumnLatest(
+					Constants.metaColFamily, Constants.metaColqualifier)
+					.getValue());
 			res.put(table, indexes);
 		}
 		rs.close();

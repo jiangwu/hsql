@@ -70,23 +70,23 @@ public class UseCaseTest {
 		UserTable table = UserTableFactory.getTable(tableName);
 		table.open();
 
-		table.insert("1", "name=abc.def dept=R&D team=hbase.hsql title=avp role=developer level=senir");
-		table.insert("2", "name=a.b dept=R&D team=hbase.hsql title=avp role=developer level=senir");
+		table.insert("1", "Meta:name=abc.def Meta:dept=R&D Meta:team=hbase.hsql Meta:title=avp Meta:role=developer Meta:level=senir");
+		table.insert("2", "Meta:name=a.b Meta:dept=R&D Meta:team=hbase.hsql Meta:title=avp Meta:role=developer Meta:level=senir");
 
-		Iterator<UserRow> it = table.select("name=abc.def").iterator();
+		Iterator<UserRow> it = table.select("Meta:name=abc.def").iterator();
 		assertTrue(it.hasNext());
 		assertTrue(it.next().getKey().equals("1"));
 		assertTrue(it.hasNext()==false);
 		
-		it = table.select("name=a.b").iterator();
+		it = table.select("Meta:name=a.b").iterator();
 		assertTrue(it.hasNext());
 		assertTrue(it.next().getKey().equals("2"));
 		assertTrue(it.hasNext()==false);
 		
-		it = table.select("name=ad").iterator();
+		it = table.select("Meta:name=ad").iterator();
 		assertTrue(it.hasNext()==false);
 		
-		it=table.select("dept=R&D").iterator();
+		it=table.select("Meta:dept=R&D").iterator();
 		assertTrue(it.hasNext());
 		System.out.println(it.next().getKey());
 		assertTrue(it.hasNext());
@@ -105,25 +105,25 @@ public class UseCaseTest {
 		UserTable table = UserTableFactory.getTable(tableName);
 		table.open();
 
-		table.insert("1", "name=1 dept=2 team=hbase.hsql title=avp role=developer level=senir");
+		table.insert("1", "Meta:name=1 Meta:dept=2 Meta:team=hbase.hsql Meta:title=avp Meta:role=developer Meta:level=senir");
 
-		Iterator<UserRow> it = table.select("name=1").iterator();
+		Iterator<UserRow> it = table.select("Meta:name=1").iterator();
 		assertTrue(it.hasNext());
 		assertTrue(it.next().getKey().equals("1"));
 
-		it = table.select("dept=2").iterator();
+		it = table.select("Meta:dept=2").iterator();
 		assertTrue(it.hasNext());
 		assertTrue(it.next().getKey().equals("1"));
 		
-		it = table.select("team=hbase.hsql").iterator();
+		it = table.select("Meta:team=hbase.hsql").iterator();
 		assertTrue(it.hasNext());
 		assertTrue(it.next().getKey().equals("1"));
 
-		it = table.select("name=1 and team=hbase.hsql").iterator();
+		it = table.select("Meta:name=1 and Meta:team=hbase.hsql").iterator();
 		assertTrue(it.hasNext());
 		assertTrue(it.next().getKey().equals("1"));
 
-		it = table.select("dept=2 and team=hbase.hsql").iterator();
+		it = table.select("Meta:dept=2 and Meta:team=hbase.hsql").iterator();
 		assertTrue(it.hasNext());
 		assertTrue(it.next().getKey().equals("1"));
 
@@ -137,28 +137,28 @@ public class UseCaseTest {
 		UserTable table = UserTableFactory.getTable(tableName);
 		table.open();
 
-		table.insert("1", "name=1 dept=2 team=hbase.hsql title=avp role=developer level=senir");
+		table.insert("1", "Meta:name=1 Meta:dept=2 Meta:team=hbase.hsql Meta:title=avp Meta:role=developer Meta:level=senir");
 
 
-		table.insert("2", "name=a dept=b team=c a4=d a5=e a6=f");
+		table.insert("2", "Meta:name=a Meta:dept=b Meta:team=c Meta:a4=d Meta:a5=e Meta:a6=f");
 		
-		Iterator<UserRow> it = table.select("name=a").iterator();
+		Iterator<UserRow> it = table.select("Meta:name=a").iterator();
 		assertTrue(it.hasNext());
 		assertTrue(it.next().getKey().equals("2"));
 
-		it = table.select("dept=b").iterator();
+		it = table.select("Meta:dept=b").iterator();
 		assertTrue(it.hasNext());
 		assertTrue(it.next().getKey().equals("2"));
 
-		it = table.select("team=c").iterator();
+		it = table.select("Meta:team=c").iterator();
 		assertTrue(it.hasNext());
 		assertTrue(it.next().getKey().equals("2"));
 		
-		it = table.select("name=a and team=c").iterator();
+		it = table.select("Meta:name=a and Meta:team=c").iterator();
 		assertTrue(it.hasNext());
 		assertTrue(it.next().getKey().equals("2"));
 
-		it = table.select("dept=b and team=c").iterator();
+		it = table.select("Meta:dept=b and Meta:team=c").iterator();
 		assertTrue(it.hasNext());
 		assertTrue(it.next().getKey().equals("2"));
 
@@ -172,14 +172,14 @@ public class UseCaseTest {
 		UserTable table = UserTableFactory.getTable(tableName);
 		table.open();
 
-		table.insert("1", "name=1 dept=2 team=hbase.hsql title=avp role=developer level=senir");
+		table.insert("1", "Meta:name=1 Meta:dept=2 Meta:team=hbase.hsql Meta:title=avp Meta:role=developer Meta:level=senir");
 
 
-		table.insert("2", "name=a dept=2 team=hbase.hsql a4=d a5=e a6=f");
+		table.insert("2", "Meta:name=a Meta:dept=2 Meta:team=hbase.hsql Meta:a4=d Meta:a5=e Meta:a6=f");
 
 
 
-		Iterator<UserRow> it = table.select("dept=2 and team=hbase.hsql").iterator();
+		Iterator<UserRow> it = table.select("Meta:dept=2 and Meta:team=hbase.hsql").iterator();
 		Set<String> keys = new HashSet<String>();
 		it.hasNext();
 		keys.add(it.next().getKey());
@@ -202,16 +202,16 @@ public class UseCaseTest {
 		UserTable table = UserTableFactory.getTable(tableName);
 		table.open();
 
-		table.insert("1", "name=1 dept=2 team=hbase.hsql title=avp role=developer level=senir");
+		table.insert("1", "Meta:name=1 Meta:dept=2 Meta:team=hbase.hsql Meta:title=avp Meta:role=developer Meta:level=senir");
 
 
-		table.insert("2", "name=a dept=b team=hbase.hsql a4=d a5=e a6=f");
+		table.insert("2", "Meta:name=a Meta:dept=b Meta:team=hbase.hsql Meta:a4=d Meta:a5=e Meta:a6=f");
 		
 
-		table.insert("3", "name=a dept=A team=hbase.hsql a4=d a5=e a6=f");
+		table.insert("3", "Meta:name=a Meta:dept=A Meta:team=hbase.hsql Meta:a4=d Meta:a5=e Meta:a6=f");
 		
 
-		Iterator<UserRow> it = table.select("dept=2 or dept=b").iterator();
+		Iterator<UserRow> it = table.select("Meta:dept=2 or Meta:dept=b").iterator();
 		Set<String> keys = new HashSet<String>();
 		while (it.hasNext()) {
 			keys.add(it.next().getKey());
@@ -235,12 +235,12 @@ public class UseCaseTest {
 		UserTable table = UserTableFactory.getTable(tableName);
 		table.open();
 
-		table.insert("1", "name=1 dept=2 team=hbase.hsql title=avp role=developer level=senir");
+		table.insert("1", "Meta:name=1 Meta:dept=2 Meta:team=hbase.hsql Meta:title=avp Meta:role=developer Meta:level=senir");
 
 		Map<String, String> indexes = new HashMap<String, String>();
 		indexes.put("name", "1");
 		
-		Iterator<UserRow> it = table.select("name=1").iterator();
+		Iterator<UserRow> it = table.select("Meta:name=1").iterator();
 		
 		assertTrue(it.hasNext());
 
@@ -248,7 +248,7 @@ public class UseCaseTest {
 
 		table.deleteRow("1");
 		
-		it = table.select("name=1").iterator();
+		it = table.select("Meta:name=1").iterator();
 		
 		assertTrue(it.hasNext() == false);
 		
@@ -261,9 +261,9 @@ public class UseCaseTest {
 		UserTable table = UserTableFactory.getTable(tableName);
 		table.open();
 
-		table.insert("1", "name=1 dept=2 team=hbase.hsql title=avp role=developer level=senir");
+		table.insert("1", "Meta:name=1 Meta:dept=2 Meta:team=hbase.hsql Meta:title=avp Meta:role=developer Meta:level=senir");
 
-		Iterator<UserRow> it = table.select("dept=2").iterator();
+		Iterator<UserRow> it = table.select("Meta:dept=2").iterator();
 		assertTrue(it.hasNext()==true);
 		assertTrue(it.next().getKey().equals("1"));
 
@@ -278,20 +278,20 @@ public class UseCaseTest {
 		UserTable table = UserTableFactory.getTable(tableName);
 		table.open();
 
-		table.insert("1", "name=1 dept=2 team=hbase.hsql title=avp role=developer level=senir");
+		table.insert("1", "Meta:name=1 Meta:dept=2 Meta:team=hbase.hsql Meta:title=avp Meta:role=developer Meta:level=senir");
 
 
-		table.insert("2", "name=a dept=b team=hbase.hsql a4=d a5=e a6=f");
+		table.insert("2", "Meta:name=a Meta:dept=b Meta:team=hbase.hsql Meta:a4=d Meta:a5=e Meta:a6=f");
 		
 
-		table.insert("3", "name=a dept=A team=B a4=d a5=e a6=f");
+		table.insert("3", "Meta:name=a Meta:dept=A Meta:team=B Meta:a4=d Meta:a5=e Meta:a6=f");
 		
-		Iterator<UserRow> it = table.select("name=a and dept=b").iterator();
+		Iterator<UserRow> it = table.select("Meta:name=a and Meta:dept=b").iterator();
 		assertTrue(it.hasNext());
 		assertTrue(it.next().getKey().equals("2"));
 		assertTrue(it.hasNext()==false);
 		
-		it = table.select("name=a or team=B").iterator();
+		it = table.select("Meta:name=a or Meta:team=B").iterator();
 		Set<String> keys=new HashSet<String>();
 		assertTrue(it.hasNext());
 		keys.add(it.next().getKey());
@@ -301,7 +301,7 @@ public class UseCaseTest {
 		assertTrue(keys.contains("2") && keys.contains("3"));
 		
 		//get 1 3
-		it=table.select("name=1 and dept=2 or name=a and dept=x or dept=A and team=B").iterator();
+		it=table.select("Meta:name=1 and Meta:dept=2 or Meta:name=a and Meta:dept=x or Meta:dept=A and Meta:team=B").iterator();
 		keys.clear();
 		assertTrue(it.hasNext());
 		keys.add(it.next().getKey());
@@ -322,7 +322,7 @@ public class UseCaseTest {
 		UserTable table = UserTableFactory.getTable(tableName);
 		table.open();
 
-		table.insert("1", "dept=2 team=hbase.hsql title=avp role=developer level=senir");
+		table.insert("1", "Meta:dept=2 Meta:team=hbase.hsql Meta:title=avp Meta:role=developer Meta:level=senir");
 
 		table.close();
 	}
@@ -332,7 +332,7 @@ public class UseCaseTest {
 		UserTable table = UserTableFactory.getTable(tableName);
 		table.open();
 		try {
-			table.select("dept=2 and team=hbase.hsql and title=avp");
+			table.select("Meta:dept=2 and Meta:team=hbase.hsql and Meta:title=avp");
 		} catch (Exception e) {
 			table.close();
 			throw e;

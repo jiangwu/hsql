@@ -32,9 +32,9 @@ import com.hsql.core.UserTableImpl.RowIterable.RowIterator;
  * This class is not thread-safe.
  */
 class UserTableImpl implements UserTable {
-	public byte[] userColumnFamily;
-	public final static byte[] indexColumnFamily = "f1".getBytes();
-	public final static byte[] indexQualifier = "primaryKey".getBytes();
+	// public byte[] userColumnFamily;
+	// public final static byte[] indexColumnFamily = "f1".getBytes();
+	// public final static byte[] indexQualifier = "primaryKey".getBytes();
 
 	private HTable userHTable = null;
 	private HTable indexHTable = null;
@@ -44,7 +44,7 @@ class UserTableImpl implements UserTable {
 
 	public UserTableImpl(String tableName) {
 		this.tableName = tableName;
-		this.indexTableName=tableName+".Index";
+		this.indexTableName = tableName + ".Index";
 	}
 
 	/**
@@ -56,22 +56,13 @@ class UserTableImpl implements UserTable {
 	public void open() throws Exception {
 		IndexAdminImpl adminUtil = new IndexAdminImpl();
 		adminUtil.open();
-		
+
 		String[] cols = adminUtil.getIndexCols(tableName);
 
 		adminUtil.close();
 		if (cols != null) {
 			for (String s : cols) {
-				String[] ss = s.split(":");
-				if (userColumnFamily == null) {
-					userColumnFamily = ss[0].getBytes();
-				} else {
-					if (!ss[0].equals(new String(userColumnFamily))) {
-						throw new Exception("ERROR, the column " + s
-								+ " is not in family " + userColumnFamily);
-					}
-				}
-				indexNames.add(ss[1]);
+				indexNames.add(s);
 			}
 		} else {
 			throw new Exception("cannot get index information for table "
@@ -108,9 +99,15 @@ class UserTableImpl implements UserTable {
 		NavigableMap<byte[], byte[]> kv = rs.getNoVersionMap().values()
 				.iterator().next();
 		Map<String, String> indexes = new HashMap<String, String>();
-		for (byte[] col : kv.keySet()) {
-			if (indexNames.contains(new String(col))) {
-				indexes.put(new String(col), new String(kv.get(col)));
+		NavigableMap<byte[], NavigableMap<byte[], byte[]>> fMap = rs
+				.getNoVersionMap();
+		for (byte[] f : fMap.keySet()) {
+			String family = new String(f);
+			for (byte[] q : fMap.get(f).keySet()) {
+				String col=family+":"+new String(q);
+				if (indexNames.contains(col)) {
+					indexes.put(col, new String(kv.get(q)));
+				}
 			}
 		}
 		List<String> indexKeys = IndexCreator.getIndexKeys(indexes, pk,
@@ -170,34 +167,24 @@ class UserTableImpl implements UserTable {
 		List<Put> puts = new ArrayList<Put>();
 
 		for (Entry<String, String> e : indexCol.entrySet()) {
-			put.add(userColumnFamily, e.getKey().getBytes(), e.getValue()
-					.getBytes());
+			String[] fq = e.getKey().split(":");
+			String f = fq[0].trim();
+			String q = fq[1].trim();
+			put.add(f.getBytes(), q.getBytes(), e.getValue().getBytes());
 			puts.add(put);
 		}
 		for (Entry<String, String> e : noneIndexCol.entrySet()) {
-
-			put.add(userColumnFamily, e.getKey().getBytes(), e.getValue()
-					.getBytes());
+			String[] fq = e.getKey().split(":");
+			String f = fq[0].trim();
+			String q = fq[1].trim();
+			put.add(f.getBytes(), q.getBytes(), e.getValue().getBytes());
 			puts.add(put);
 		}
 
 		userHTable.put(puts);
 
 		insertIndex(key, indexCol);
-
-		// List<String> indexes = IndexCreator.getIndexKeys(indexCol, key,
-		// indexNames);
-		//
-		// puts.clear();
-		// for (String index : indexes) {
-		// put = new Put((index).getBytes());
-		// put.add(indexColumnFamily, indexQualifier, key.getBytes());
-		// puts.add(put);
-		// }
-		// indexHTable.put(puts);
-
 	}
-
 
 	private void insertIndex(String key, Map<String, String> indexCol)
 			throws Exception {
@@ -208,7 +195,8 @@ class UserTableImpl implements UserTable {
 		for (String index : indexes) {
 
 			Put put = new Put((index).getBytes());
-			put.add(indexColumnFamily, indexQualifier, key.getBytes());
+			put.add(Constants.metaColFamily, Constants.metaColqualifier,
+					key.getBytes());
 			puts.add(put);
 		}
 		indexHTable.put(puts);
@@ -283,29 +271,33 @@ class UserTableImpl implements UserTable {
 		byte[] stopRow = searchKey.getBytes();
 		stopRow[stopRow.length - 1]++;
 		scan.setStopRow(stopRow);
-		scan.addColumn(indexColumnFamily, indexQualifier);
+		scan.addColumn(Constants.metaColFamily, Constants.metaColqualifier);
 		ResultScanner rs = indexHTable.getScanner(scan);
 		return rs;
 	}
 
 	private UserRow getRow(Result rr) throws IOException {
-		String primaryKey = new String(rr.getValue(indexColumnFamily,
-				indexQualifier));
+		String primaryKey = new String(rr.getValue(Constants.metaColFamily,
+				Constants.metaColqualifier));
 		Get get = new Get(primaryKey.getBytes());
 		Result getRes = userHTable.get(get);
 		NavigableMap<byte[], NavigableMap<byte[], byte[]>> resMap = getRes
 				.getNoVersionMap();
-		NavigableMap<byte[], byte[]> fMap = resMap.get(userColumnFamily);
+		// NavigableMap<byte[], byte[]> fMap = resMap.get(userColumnFamily);
 
 		Map<String, String> indexedCol = new HashMap<String, String>();
 		Map<String, String> unIndexedCol = new HashMap<String, String>();
-		for (byte[] kk : fMap.keySet()) {
-			String col = new String(kk);
-			String v = new String(fMap.get(kk));
-			if (indexNames.contains(col)) {
-				indexedCol.put(col, v);
-			} else {
-				unIndexedCol.put(col, v);
+		for (byte[] f : resMap.keySet()) {
+			NavigableMap<byte[], byte[]> fMap = resMap.get(f);
+			for (byte[] kk : fMap.keySet()) {
+				String q = new String(kk);
+				String v = new String(fMap.get(kk));
+				String col = new String(f) + ":" + q;
+				if (indexNames.contains(col)) {
+					indexedCol.put(col, v);
+				} else {
+					unIndexedCol.put(col, v);
+				}
 			}
 		}
 
@@ -427,10 +419,6 @@ class UserTableImpl implements UserTable {
 			throw new Exception("cannot parse command " + command, e);
 		}
 	}
-	
-	
-
-
 
 	@Override
 	public Iterable<UserRow> select(String condition) throws Exception {
