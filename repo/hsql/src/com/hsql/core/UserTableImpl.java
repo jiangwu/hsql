@@ -195,7 +195,7 @@ class UserTableImpl implements UserTable {
 		for (String index : indexes) {
 
 			Put put = new Put((index).getBytes());
-			put.add(Constants.metaColFamily, Constants.metaColqualifier,
+			put.add(Constants.userIndexColFamily, Constants.userIndexColqualifier,
 					key.getBytes());
 			puts.add(put);
 		}
@@ -271,14 +271,14 @@ class UserTableImpl implements UserTable {
 		byte[] stopRow = searchKey.getBytes();
 		stopRow[stopRow.length - 1]++;
 		scan.setStopRow(stopRow);
-		scan.addColumn(Constants.metaColFamily, Constants.metaColqualifier);
+		scan.addColumn(Constants.userIndexColFamily, Constants.userIndexColqualifier);
 		ResultScanner rs = indexHTable.getScanner(scan);
 		return rs;
 	}
 
 	private UserRow getRow(Result rr) throws IOException {
-		String primaryKey = new String(rr.getValue(Constants.metaColFamily,
-				Constants.metaColqualifier));
+		String primaryKey = new String(rr.getValue(Constants.userIndexColFamily,
+				Constants.userIndexColqualifier));
 		Get get = new Get(primaryKey.getBytes());
 		Result getRes = userHTable.get(get);
 		NavigableMap<byte[], NavigableMap<byte[], byte[]>> resMap = getRes

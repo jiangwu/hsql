@@ -131,9 +131,9 @@ class IndexCreator {
 	 * @return a list of keys used to find primary key
 	 * @throws Exception 
 	 */
-	public static List<String> getIndexKeys(Map<String, String> indexCol, String pKey, TreeSet<String> indexNames) throws Exception {
+	public static List<String> getIndexKeys(Map<String, String> indexCol, String pKey, TreeSet<String> indexNames) {
 		if(indexCol.size()>indexNames.size() || !indexNames.containsAll(indexCol.keySet())){
-			throw new Exception(indexCol+" contains invalid or insufficent indexes");
+			return null;
 		}
 		TreeMap<String, String> tree = new TreeMap<String, String>();
 		tree.putAll(indexCol);
